@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Clientes - Personalizado Cícero</title>
+  <style>
+    /* (mantenha todo o CSS anterior — ele está ótimo!) */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: #f0f2f5;
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .header {
+      background: #1a3a5f;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin: 0;
+    }
+
+    .header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 20px auto;
+      display: flex;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .sidebar {
+      width: 220px;
+      background: #2c3e50;
+      color: white;
+      padding: 20px;
+    }
+
+    .sidebar h3 {
+      font-size: 16px;
+      margin-bottom: 15px;
+      color: #1abc9c;
+      text-align: center;
+    }
+
+    .menu-item {
+      padding: 12px 15px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: background 0.3s, padding-left 0.2s;
+      font-size: 14px;
+    }
+
+    .menu-item:hover {
+      background: #34495e;
+      padding-left: 18px;
+    }
+
+    .menu-item.active {
+      background: #1abc9c;
+      font-weight: bold;
+    }
+
+    .content {
+      flex: 1;
+      padding: 30px;
+      min-height: 500px;
+    }
+
+    .content-section {
+      display: none;
+      animation: fadeIn 0.5s;
+    }
+
+    .content-section.active {
+      display: block;
+    }
+
+    .back-btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 8px 16px;
+      background: #555;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .back-btn:hover {
+      background: #333;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    input, select, button {
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      width: 100%;
+      font-size: 14px;
+    }
+
+    button.primary {
+      background: #1abc9c;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button.primary:hover {
+      background: #16a085;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    table th, table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+
+    table th {
+      background: #f4f4f4;
+      color: #2c3e50;
+    }
+
+    table tr:hover {
+      background: #f9f9f9;
+    }
+
+    .loading {
+      color: #666;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>👥 Gestão de Clientes</h1>
+    <p>Personalizado Cícero - Sistema de Gestão</p>
+  </div>
+
+  <div class="container">
+    <div class="sidebar">
+      <h3>MENU CLIENTES</h3>
+      <div class="menu-item active" onclick="showSection('novo')">Novo Cliente</div>
+      <div class="menu-item" onclick="showSection('editar')">Editar/Excluir Cliente</div>
+      <div class="menu-item" onclick="showSection('historico')">Histórico de Orçamento</div>
+    </div>
+
+    <div class="content">
+      <!-- Seção: Novo Cliente -->
+      <div id="novo" class="content-section active">
+        <h2>➕ Adicionar Novo Cliente</h2>
+        <form id="formCliente">
+          <input type="text" id="nome" placeholder="Nome" required />
+          <input type="text" id="rSocial" placeholder="Razão Social" />
+          <input type="text" id="cnpj" placeholder="CNPJ" />
+          <input type="text" id="endereco" placeholder="Endereço" />
+          <input type="text" id="cep" placeholder="CEP" />
+          <input type="text" id="cidade" placeholder="Cidade" />
+          <input type="text" id="uf" placeholder="UF (ex: SP)" maxlength="2" />
+          <input type="text" id="inscricaoEstadual" placeholder="Inscrição Estadual" />
+          <input type="email" id="email" placeholder="E-mail" />
+          <input type="text" id="telefone" placeholder="Telefone" />
+          <button type="submit" class="primary">Cadastrar Cliente</button>
+        </form>
+        <a href="index.html" class="back-btn">Voltar ao Menu</a>
+      </div>
+
+      <!-- Seção: Editar/Excluir -->
+      <div id="editar" class="content-section">
+        <h2>✏️ Editar ou Excluir Cliente</h2>
+        <p class="loading">Carregando clientes...</p>
+        <div id="listaClientes"></div>
+        <a href="index.html" class="back-btn">Voltar ao Menu</a>
+      </div>
+
+      <!-- Seção: Histórico -->
+      <div id="historico" class="content-section">
+        <h2>📋 Histórico de Orçamentos</h2>
+        <select id="clienteSelect">
+          <option value="">Carregando clientes...</option>
+        </select>
+        <div id="historicoResultado">
+          <p style="margin-top: 20px;">Selecione um cliente para ver o histórico.</p>
+        </div>
+        <a href="index.html" class="back-btn">Voltar ao Menu</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if (!localStorage.getItem("isLoggedIn")) {
+      window.location.href = "login.html";
+    }
+
+    // 🔗 SUBSTITUA pela URL da sua implantação do Apps Script
+    const API_URL = "https://script.google.com/macros/s/AKfycbyIfj8EGHz5HsHQlX_0BGF8L2cscWMo83jLnw3stpjY3KsXLAIVXFEH-Bzj0fbo4pIh/exec";
+
+    function showSection(id) {
+      document.querySelectorAll(".content-section").forEach(sec => sec.classList.remove("active"));
+      document.querySelectorAll(".menu-item").forEach(item => item.classList.remove("active"));
+
+      document.getElementById(id).classList.add("active");
+      const index = id === 'novo' ? 0 : id === 'editar' ? 1 : 2;
+      document.querySelectorAll(".menu-item")[index].classList.add("active");
+
+      if (id === "editar" || id === "historico") carregarClientes();
+    }
+
+    // Enviar formulário
+    document.getElementById("formCliente").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const payload = {
+        nome: document.getElementById("nome").value,
+        rSocial: document.getElementById("rSocial").value,
+        cnpj: document.getElementById("cnpj").value,
+        endereco: document.getElementById("endereco").value,
+        cep: document.getElementById("cep").value,
+        cidade: document.getElementById("cidade").value,
+        uf: document.getElementById("uf").value,
+        inscricaoEstadual: document.getElementById("inscricaoEstadual").value,
+        email: document.getElementById("email").value,
+        telefone: document.getElementById("telefone").value
+      };
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify(payload),
+          headers: { "Content-Type": "application/json" }
+        });
+
+        const result = await res.json();
+        if (result.result === "success") {
+          alert("✅ Cliente cadastrado com sucesso!");
+          this.reset();
+        } else {
+          alert("❌ Erro: " + result.message);
+        }
+      } catch (err) {
+        alert("❌ Falha na conexão: " + err.message);
+      }
+    });
+
+    // Carregar clientes
+    async function carregarClientes() {
+      try {
+        const res = await fetch(API_URL);
+        const clientes = await res.json();
+
+        // Preencher lista de edição
+        const listaDiv = document.getElementById("listaClientes");
+        listaDiv.innerHTML = `
+          <table>
+            <tr>
+              <th>Nome</th>
+              <th>CNPJ</th>
+              <th>Telefone</th>
+              <th>Ações</th>
+            </tr>
+            ${clientes.map(c => `
+              <tr>
+                <td>${c.Nome}</td>
+                <td>${c.CNPJ || ''}</td>
+                <td>${c.Telefone || ''}</td>
+                <td>
+                  <button onclick="alert('Editar cliente: ${c.Nome}')" style="background:#f39c12">Editar</button>
+                  <button onclick="confirm('Excluir ${c.Nome}?') && alert('Excluído!')" style="background:#e74c3c">Excluir</button>
+                </td>
+              </tr>
+            `).join('')}
+          </table>
+        `;
+
+        // Preencher select do histórico
+        const select = document.getElementById("clienteSelect");
+        select.innerHTML = '<option value="">Selecione um cliente</option>';
+        clientes.forEach(c => {
+          const opt = document.createElement("option");
+          opt.value = c.CNPJ;
+          opt.textContent = c.Nome;
+          select.appendChild(opt);
+        });
+      } catch (err) {
+        document.getElementById("listaClientes").innerHTML = `<p>Erro ao carregar clientes.</p>`;
+        document.getElementById("clienteSelect").innerHTML = `<option>Erro ao carregar</option>`;
+      }
+    }
+
+    // Histórico (simulado por enquanto)
+    function exibirHistorico() {
+      const cliente = document.getElementById("clienteSelect").value;
+      const div = document.getElementById("historicoResultado");
+      if (cliente) {
+        div.innerHTML = `
+          <p><strong>Cliente:</strong> ${document.getElementById("clienteSelect").selectedOptions[0].textContent}</p>
+          <table>
+            <tr><th>Data</th><th>Serviço</th><th>Valor</th><th>Status</th></tr>
+            <tr><td>10/04/2025</td><td>Armário Sob Medida</td><td>R$ 1.200,00</td><td>Aprovado</td></tr>
+            <tr><td>05/03/2025</td><td>Cozinha Planejada</td><td>R$ 2.500,00</td><td>Concluído</td></tr>
+          </table>
+        `;
+      } else {
+        div.innerHTML = `<p>Selecione um cliente para ver o histórico.</p>`;
+      }
+    }
+
+    // Evento para histórico
+    document.getElementById("clienteSelect").addEventListener("change", exibirHistorico);
+  </script>
+</body>
+</html>

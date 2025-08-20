@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Relatórios - Personalizado Cícero</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f0f2f5; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .back-btn { background: #555; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+    h1 { color: #1a3a5f; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📊 Relatórios e Análises</h1>
+    <button class="back-btn" onclick="history.back()">Voltar</button>
+  </div>
+  <p>Gráficos de vendas, margem de lucro, custos por produto e desempenho mensal.</p>
+  <p>Em breve: integração com dados reais e exportação para Excel.</p>
+</body>
+<script>
+  if (!localStorage.getItem("isLoggedIn")) window.location.href = "login.html";
+</script>
+</html>
