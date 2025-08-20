@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Clientes - Personalizado Cícero</title>
   <style>
-    /* (mantenha todo o CSS anterior — ele está ótimo!) */
     * {
       margin: 0;
       padding: 0;
@@ -156,9 +155,12 @@
       background: #f9f9f9;
     }
 
-    .loading {
-      color: #666;
-      font-style: italic;
+    .tools {
+      margin: 20px 0;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      text-align: center;
     }
   </style>
 </head>
@@ -193,26 +195,25 @@
           <input type="text" id="telefone" placeholder="Telefone" />
           <button type="submit" class="primary">Cadastrar Cliente</button>
         </form>
+
+        <div class="tools">
+          <button onclick="testarEnvio()" style="background:#28a745">🔧 TESTE RÁPIDO</button>
+        </div>
+
         <a href="index.html" class="back-btn">Voltar ao Menu</a>
       </div>
 
       <!-- Seção: Editar/Excluir -->
       <div id="editar" class="content-section">
         <h2>✏️ Editar ou Excluir Cliente</h2>
-        <p class="loading">Carregando clientes...</p>
-        <div id="listaClientes"></div>
+        <p>Em breve: lista de clientes e ações.</p>
         <a href="index.html" class="back-btn">Voltar ao Menu</a>
       </div>
 
       <!-- Seção: Histórico -->
       <div id="historico" class="content-section">
         <h2>📋 Histórico de Orçamentos</h2>
-        <select id="clienteSelect">
-          <option value="">Carregando clientes...</option>
-        </select>
-        <div id="historicoResultado">
-          <p style="margin-top: 20px;">Selecione um cliente para ver o histórico.</p>
-        </div>
+        <p>Em breve: histórico por cliente.</p>
         <a href="index.html" class="back-btn">Voltar ao Menu</a>
       </div>
     </div>
@@ -233,8 +234,6 @@
       document.getElementById(id).classList.add("active");
       const index = id === 'novo' ? 0 : id === 'editar' ? 1 : 2;
       document.querySelectorAll(".menu-item")[index].classList.add("active");
-
-      if (id === "editar" || id === "historico") carregarClientes();
     }
 
     // Enviar formulário
@@ -243,101 +242,70 @@
 
       const payload = {
         nome: document.getElementById("nome").value,
-        rSocial: document.getElementById("rSocial").value,
+        "R.Social": document.getElementById("rSocial").value,
         cnpj: document.getElementById("cnpj").value,
         endereco: document.getElementById("endereco").value,
         cep: document.getElementById("cep").value,
         cidade: document.getElementById("cidade").value,
         uf: document.getElementById("uf").value,
-        inscricaoEstadual: document.getElementById("inscricaoEstadual").value,
+        "Inscrição Estadual": document.getElementById("inscricaoEstadual").value,
         email: document.getElementById("email").value,
         telefone: document.getElementById("telefone").value
       };
 
-      try {
-        const res = await fetch(API_URL, {
-          method: "POST",
-          body: JSON.stringify(payload),
-          headers: { "Content-Type": "application/json" }
-        });
-
-        const result = await res.json();
-        if (result.result === "success") {
-          alert("✅ Cliente cadastrado com sucesso!");
-          this.reset();
-        } else {
-          alert("❌ Erro: " + result.message);
-        }
-      } catch (err) {
-        alert("❌ Falha na conexão: " + err.message);
-      }
+      await enviarDados(payload);
+      this.reset();
     });
 
-    // Carregar clientes
-    async function carregarClientes() {
+    // Função de envio com formato seguro
+    async function enviarDados(dados) {
+      const url = API_URL + "?usp=web_view";
+
+      // Converte para x-www-form-urlencoded
+      const body = Object.keys(dados)
+        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(dados[key] || "")}`)
+        .join("&");
+
       try {
-        const res = await fetch(API_URL);
-        const clientes = await res.json();
-
-        // Preencher lista de edição
-        const listaDiv = document.getElementById("listaClientes");
-        listaDiv.innerHTML = `
-          <table>
-            <tr>
-              <th>Nome</th>
-              <th>CNPJ</th>
-              <th>Telefone</th>
-              <th>Ações</th>
-            </tr>
-            ${clientes.map(c => `
-              <tr>
-                <td>${c.Nome}</td>
-                <td>${c.CNPJ || ''}</td>
-                <td>${c.Telefone || ''}</td>
-                <td>
-                  <button onclick="alert('Editar cliente: ${c.Nome}')" style="background:#f39c12">Editar</button>
-                  <button onclick="confirm('Excluir ${c.Nome}?') && alert('Excluído!')" style="background:#e74c3c">Excluir</button>
-                </td>
-              </tr>
-            `).join('')}
-          </table>
-        `;
-
-        // Preencher select do histórico
-        const select = document.getElementById("clienteSelect");
-        select.innerHTML = '<option value="">Selecione um cliente</option>';
-        clientes.forEach(c => {
-          const opt = document.createElement("option");
-          opt.value = c.CNPJ;
-          opt.textContent = c.Nome;
-          select.appendChild(opt);
+        const res = await fetch(url, {
+          method: "POST",
+          mode: "cors",
+          body: body,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          }
         });
+
+        if (res.ok) {
+          const text = await res.text();
+          console.log("Resposta:", text);
+          alert("✅ Cliente cadastrado com sucesso!");
+        } else {
+          alert("❌ Erro: " + res.status);
+        }
       } catch (err) {
-        document.getElementById("listaClientes").innerHTML = `<p>Erro ao carregar clientes.</p>`;
-        document.getElementById("clienteSelect").innerHTML = `<option>Erro ao carregar</option>`;
+        console.error("Erro no fetch:", err);
+        alert("❌ Falha na conexão: " + err.message);
       }
     }
 
-    // Histórico (simulado por enquanto)
-    function exibirHistorico() {
-      const cliente = document.getElementById("clienteSelect").value;
-      const div = document.getElementById("historicoResultado");
-      if (cliente) {
-        div.innerHTML = `
-          <p><strong>Cliente:</strong> ${document.getElementById("clienteSelect").selectedOptions[0].textContent}</p>
-          <table>
-            <tr><th>Data</th><th>Serviço</th><th>Valor</th><th>Status</th></tr>
-            <tr><td>10/04/2025</td><td>Armário Sob Medida</td><td>R$ 1.200,00</td><td>Aprovado</td></tr>
-            <tr><td>05/03/2025</td><td>Cozinha Planejada</td><td>R$ 2.500,00</td><td>Concluído</td></tr>
-          </table>
-        `;
-      } else {
-        div.innerHTML = `<p>Selecione um cliente para ver o histórico.</p>`;
-      }
-    }
+    // Botão de teste
+    function testarEnvio() {
+      const dados = {
+        nome: "Teste GitHub",
+        "R.Social": "Empresa GitHub",
+        cnpj: "99.999.999/9999-99",
+        endereco: "Rua GitHub, 999",
+        cep: "99999-999",
+        cidade: "GitHub",
+        uf: "GH",
+        "Inscrição Estadual": "ISENTO",
+        email: "github@teste.com",
+        telefone: "99999-9999"
+      };
 
-    // Evento para histórico
-    document.getElementById("clienteSelect").addEventListener("change", exibirHistorico);
+      enviarDados(dados);
+    }
   </script>
 </body>
 </html>
