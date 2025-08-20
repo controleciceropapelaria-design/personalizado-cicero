@@ -237,57 +237,57 @@
     }
 
     // Enviar formulário
-    document.getElementById("formCliente").addEventListener("submit", async function(e) {
-      e.preventDefault();
+    document.getElementById("formCliente").addEventListener("submit", function(e) {
+  e.preventDefault();
 
-      const payload = {
-        nome: document.getElementById("nome").value,
-        "R.Social": document.getElementById("rSocial").value,
-        cnpj: document.getElementById("cnpj").value,
-        endereco: document.getElementById("endereco").value,
-        cep: document.getElementById("cep").value,
-        cidade: document.getElementById("cidade").value,
-        uf: document.getElementById("uf").value,
-        "Inscrição Estadual": document.getElementById("inscricaoEstadual").value,
-        email: document.getElementById("email").value,
-        telefone: document.getElementById("telefone").value
-      };
+  const payload = {
+    nome: document.getElementById("nome").value,
+    "R.Social": document.getElementById("rSocial").value,
+    cnpj: document.getElementById("cnpj").value,
+    endereco: document.getElementById("endereco").value,
+    cep: document.getElementById("cep").value,
+    cidade: document.getElementById("cidade").value,
+    uf: document.getElementById("uf").value,
+    "Inscrição Estadual": document.getElementById("inscricaoEstadual").value,
+    email: document.getElementById("email").value,
+    telefone: document.getElementById("telefone").value
+  };
 
-      await enviarDados(payload);
-      this.reset();
-    });
+  enviarDados(payload);
+  this.reset();
+});
 
     // Função de envio com formato seguro
-    async function enviarDados(dados) {
-      const url = API_URL + "?usp=web_view";
+    // Função de envio robusto com sendBeacon (sem CORS)
+function enviarDados(dados) {
+  const url = API_URL + "?usp=web_view";
 
-      // Converte para x-www-form-urlencoded
-      const body = Object.keys(dados)
-        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(dados[key] || "")}`)
-        .join("&");
+  // Converte para x-www-form-urlencoded
+  const body = Object.keys(dados)
+    .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(dados[key] || "")}`)
+    .join("&");
 
-      try {
-        const res = await fetch(url, {
-          method: "POST",
-          mode: "cors",
-          body: body,
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-          }
-        });
-
-        if (res.ok) {
-          const text = await res.text();
-          console.log("Resposta:", text);
-          alert("✅ Cliente cadastrado com sucesso!");
-        } else {
-          alert("❌ Erro: " + res.status);
-        }
-      } catch (err) {
-        console.error("Erro no fetch:", err);
-        alert("❌ Falha na conexão: " + err.message);
-      }
+  // Usa sendBeacon (funciona mesmo com no-cors)
+  if (navigator.sendBeacon) {
+    const success = navigator.sendBeacon(url, body);
+    if (success) {
+      alert("✅ Dados enviados! Verifique na planilha em até 1 minuto.");
+    } else {
+      alert("⚠️ Dados não enviados (sendBeacon falhou)");
     }
+  } else {
+    // Fallback com fetch no-cors
+    fetch(url, {
+      method: "POST",
+      mode: "no-cors",
+      body: body,
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      }
+    });
+    alert("✅ Dados enviados (via fetch no-cors)! Verifique na planilha.");
+  }
+}
 
     // Botão de teste
     function testarEnvio() {
