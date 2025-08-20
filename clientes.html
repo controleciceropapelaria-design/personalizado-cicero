@@ -338,56 +338,57 @@
     }
 
     // Carregar clientes
-    async function carregarClientes() {
-      const listaDiv = document.getElementById("listaClientes");
-      listaDiv.innerHTML = '<p class="loading">Carregando clientes...</p>';
+    // Carregar clientes
+async function carregarClientes() {
+  const listaDiv = document.getElementById("listaClientes");
+  listaDiv.innerHTML = '<p class="loading">Carregando clientes...</p>';
 
-      try {
-        const res = await fetch(API_URL);
-        const data = await res.json();
+  try {
+    // Usa ?action=getClients para obter JSON
+    const res = await fetch(API_URL + "?action=getClients");
+    const data = await res.json();
 
-        if (!Array.isArray(data) || data.length === 0) {
-          listaDiv.innerHTML = '<p>Nenhum cliente encontrado.</p>';
-          return;
-        }
-
-        // Cria tabela
-        let table = `
-          <table>
-            <tr>
-              <th>Nome</th>
-              <th>CNPJ</th>
-              <th>Telefone</th>
-              <th>Ações</th>
-            </tr>
-        `;
-
-        data.forEach((cliente, index) => {
-          const nome = cliente.Nome || "Sem nome";
-          const cnpj = cliente.CNPJ || "";
-          const telefone = cliente.Telefone || "";
-          
-          table += `
-            <tr>
-              <td>${nome}</td>
-              <td>${cnpj}</td>
-              <td>${telefone}</td>
-              <td>
-                <button class="edit" onclick="alert('Editar cliente: ${nome}')">Editar</button>
-                <button class="delete" onclick="excluirCliente('${cnpj}', '${nome}', ${index + 2})">Excluir</button>
-              </td>
-            </tr>
-          `;
-        });
-
-        table += `</table>`;
-        listaDiv.innerHTML = table;
-
-      } catch (err) {
-        listaDiv.innerHTML = `<p>Erro ao carregar clientes. <button onclick="carregarClientes()">Tentar novamente</button></p>`;
-        console.error("Erro ao carregar clientes:", err);
-      }
+    if (!Array.isArray(data) || data.length === 0) {
+      listaDiv.innerHTML = '<p>Nenhum cliente encontrado.</p>';
+      return;
     }
+
+    let table = `
+      <table>
+        <tr>
+          <th>Nome</th>
+          <th>CNPJ</th>
+          <th>Telefone</th>
+          <th>Ações</th>
+        </tr>
+    `;
+
+    data.forEach((cliente, index) => {
+      const nome = cliente.Nome || "Sem nome";
+      const cnpj = cliente.CNPJ || "";
+      const telefone = cliente.Telefone || "";
+      
+      table += `
+        <tr>
+          <td>${nome}</td>
+          <td>${cnpj}</td>
+          <td>${telefone}</td>
+          <td>
+            <button class="edit" onclick="alert('Editar: ${nome}')">Editar</button>
+            <button class="delete" onclick="excluirCliente('${cnpj}', '${nome}', ${index + 2})">Excluir</button>
+          </td>
+        </tr>
+      `;
+    });
+
+    table += `</table>`;
+    listaDiv.innerHTML = table;
+
+  } catch (err) {
+    listaDiv.innerHTML = `<p>Erro ao carregar clientes. <button onclick="carregarClientes()">Tentar novamente</button></p>`;
+    console.error("Erro ao carregar clientes:", err);
+  }
+}
 
     // Função de exclusão
     async function excluirCliente(cnpj, nome, row) {
