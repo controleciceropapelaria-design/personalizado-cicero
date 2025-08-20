@@ -220,6 +220,7 @@
   </div>
 
   <script>
+    // Verifica login
     if (!localStorage.getItem("isLoggedIn")) {
       window.location.href = "login.html";
     }
@@ -238,69 +239,79 @@
 
     // Enviar formulário
     document.getElementById("formCliente").addEventListener("submit", function(e) {
-  e.preventDefault();
+      e.preventDefault();
 
-  const payload = {
-    nome: document.getElementById("nome").value,
-    "R.Social": document.getElementById("rSocial").value,
-    cnpj: document.getElementById("cnpj").value,
-    endereco: document.getElementById("endereco").value,
-    cep: document.getElementById("cep").value,
-    cidade: document.getElementById("cidade").value,
-    uf: document.getElementById("uf").value,
-    "Inscrição Estadual": document.getElementById("inscricaoEstadual").value,
-    email: document.getElementById("email").value,
-    telefone: document.getElementById("telefone").value
-  };
+      const payload = {
+        nome: document.getElementById("nome").value,
+        "R.Social": document.getElementById("rSocial").value,
+        cnpj: document.getElementById("cnpj").value,
+        endereco: document.getElementById("endereco").value,
+        cep: document.getElementById("cep").value,
+        cidade: document.getElementById("cidade").value,
+        uf: document.getElementById("uf").value,
+        "Inscrição Estadual": document.getElementById("inscricaoEstadual").value,
+        email: document.getElementById("email").value,
+        telefone: document.getElementById("telefone").value
+      };
 
-  enviarDados(payload);
-  this.reset();
-});
-
-    // Função de envio com formato seguro
-    // Função de envio robusto com sendBeacon (sem CORS)
-function enviarDados(dados) {
-  const url = API_URL + "?usp=web_view";
-
-  // Converte para x-www-form-urlencoded
-  const body = Object.keys(dados)
-    .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(dados[key] || "")}`)
-    .join("&");
-
-  // Usa sendBeacon (funciona mesmo com no-cors)
-  if (navigator.sendBeacon) {
-    const success = navigator.sendBeacon(url, body);
-    if (success) {
-      alert("✅ Dados enviados! Verifique na planilha em até 1 minuto.");
-    } else {
-      alert("⚠️ Dados não enviados (sendBeacon falhou)");
-    }
-  } else {
-    // Fallback com fetch no-cors
-    fetch(url, {
-      method: "POST",
-      mode: "no-cors",
-      body: body,
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
-      }
+      enviarDados(payload);
+      this.reset();
     });
-    alert("✅ Dados enviados (via fetch no-cors)! Verifique na planilha.");
-  }
-}
+
+    // Função de envio robusto
+    function enviarDados(dados) {
+      const url = API_URL + "?usp=web_view";
+
+      // Converte para x-www-form-urlencoded
+      const body = Object.keys(dados)
+        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(dados[key] || "")}`)
+        .join("&");
+
+      console.log("Enviando para:", url);
+      console.log("Dados:", body);
+
+      // Usa sendBeacon se disponível (sem CORS)
+      if (navigator.sendBeacon) {
+        const success = navigator.sendBeacon(url, body);
+        if (success) {
+          console.log("✅ Dados enviados via sendBeacon");
+          alert("✅ Dados enviados! Verifique na planilha em até 1 minuto.");
+        } else {
+          console.error("❌ sendBeacon falhou");
+          alert("⚠️ Dados não enviados (sendBeacon falhou)");
+        }
+      } else {
+        // Fallback com fetch no-cors
+        fetch(url, {
+          method: "POST",
+          mode: "no-cors",
+          body: body,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          }
+        })
+        .then(() => {
+          console.log("✅ Dados enviados via fetch no-cors");
+          alert("✅ Dados enviados (modo offline)! Verifique na planilha.");
+        })
+        .catch(err => {
+          console.error("❌ Erro no fetch:", err);
+        });
+      }
+    }
 
     // Botão de teste
     function testarEnvio() {
       const dados = {
-        nome: "Teste GitHub",
-        "R.Social": "Empresa GitHub",
+        nome: "Teste Final",
+        "R.Social": "Empresa Final LTDA",
         cnpj: "99.999.999/9999-99",
-        endereco: "Rua GitHub, 999",
+        endereco: "Av. Final, 999",
         cep: "99999-999",
-        cidade: "GitHub",
-        uf: "GH",
+        cidade: "Final",
+        uf: "FF",
         "Inscrição Estadual": "ISENTO",
-        email: "github@teste.com",
+        email: "final@teste.com",
         telefone: "99999-9999"
       };
 
