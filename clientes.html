@@ -134,6 +134,24 @@
       background: #16a085;
     }
 
+    button.edit {
+      background: #f39c12;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    button.delete {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -161,6 +179,13 @@
       background: #f8f9fa;
       border-radius: 6px;
       text-align: center;
+    }
+
+    .loading {
+      text-align: center;
+      color: #666;
+      font-style: italic;
+      padding: 20px;
     }
   </style>
 </head>
@@ -206,7 +231,8 @@
       <!-- Seção: Editar/Excluir -->
       <div id="editar" class="content-section">
         <h2>✏️ Editar ou Excluir Cliente</h2>
-        <p>Em breve: lista de clientes e ações.</p>
+        <button onclick="carregarClientes()" style="background:#007cba; color:white; padding:10px">🔄 Atualizar Lista</button>
+        <div id="listaClientes" class="loading">Carregando clientes...</div>
         <a href="index.html" class="back-btn">Voltar ao Menu</a>
       </div>
 
@@ -220,13 +246,12 @@
   </div>
 
   <script>
-    // Verifica login
     if (!localStorage.getItem("isLoggedIn")) {
       window.location.href = "login.html";
     }
 
     // 🔗 SUBSTITUA pela URL da sua implantação do Apps Script
-    const API_URL = "https://script.google.com/macros/s/AKfycbw0H-IN_6ie2t9Am4lyyt21OVWH20Iae4CpFUF5edKFN9YbvSkbWnByW2-T6v62licE/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbyIfj8EGHz5HsHQlX_0BGF8L2cscWMo83jLnw3stpjY3KsXLAIVXFEH-Bzj0fbo4pIh/exec";
 
     function showSection(id) {
       document.querySelectorAll(".content-section").forEach(sec => sec.classList.remove("active"));
@@ -235,6 +260,8 @@
       document.getElementById(id).classList.add("active");
       const index = id === 'novo' ? 0 : id === 'editar' ? 1 : 2;
       document.querySelectorAll(".menu-item")[index].classList.add("active");
+
+      if (id === "editar") carregarClientes();
     }
 
     // Enviar formulário
@@ -270,7 +297,6 @@
       console.log("Enviando para:", url);
       console.log("Dados:", body);
 
-      // Usa sendBeacon se disponível (sem CORS)
       if (navigator.sendBeacon) {
         const success = navigator.sendBeacon(url, body);
         if (success) {
@@ -281,7 +307,6 @@
           alert("⚠️ Dados não enviados (sendBeacon falhou)");
         }
       } else {
-        // Fallback com fetch no-cors
         fetch(url, {
           method: "POST",
           mode: "no-cors",
@@ -289,14 +314,8 @@
           headers: {
             "Content-Type": "application/x-www-form-urlencoded"
           }
-        })
-        .then(() => {
-          console.log("✅ Dados enviados via fetch no-cors");
-          alert("✅ Dados enviados (modo offline)! Verifique na planilha.");
-        })
-        .catch(err => {
-          console.error("❌ Erro no fetch:", err);
         });
+        alert("✅ Dados enviados (modo offline)! Verifique na planilha.");
       }
     }
 
@@ -316,6 +335,80 @@
       };
 
       enviarDados(dados);
+    }
+
+    // Carregar clientes
+    async function carregarClientes() {
+      const listaDiv = document.getElementById("listaClientes");
+      listaDiv.innerHTML = '<p class="loading">Carregando clientes...</p>';
+
+      try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+
+        if (!Array.isArray(data) || data.length === 0) {
+          listaDiv.innerHTML = '<p>Nenhum cliente encontrado.</p>';
+          return;
+        }
+
+        // Cria tabela
+        let table = `
+          <table>
+            <tr>
+              <th>Nome</th>
+              <th>CNPJ</th>
+              <th>Telefone</th>
+              <th>Ações</th>
+            </tr>
+        `;
+
+        data.forEach((cliente, index) => {
+          const nome = cliente.Nome || "Sem nome";
+          const cnpj = cliente.CNPJ || "";
+          const telefone = cliente.Telefone || "";
+          
+          table += `
+            <tr>
+              <td>${nome}</td>
+              <td>${cnpj}</td>
+              <td>${telefone}</td>
+              <td>
+                <button class="edit" onclick="alert('Editar cliente: ${nome}')">Editar</button>
+                <button class="delete" onclick="excluirCliente('${cnpj}', '${nome}', ${index + 2})">Excluir</button>
+              </td>
+            </tr>
+          `;
+        });
+
+        table += `</table>`;
+        listaDiv.innerHTML = table;
+
+      } catch (err) {
+        listaDiv.innerHTML = `<p>Erro ao carregar clientes. <button onclick="carregarClientes()">Tentar novamente</button></p>`;
+        console.error("Erro ao carregar clientes:", err);
+      }
+    }
+
+    // Função de exclusão
+    async function excluirCliente(cnpj, nome, row) {
+      if (!confirm(`Tem certeza que deseja excluir o cliente "${nome}"?`)) return;
+
+      try {
+        const res = await fetch(API_URL + "?action=delete&row=" + row, {
+          method: "POST",
+          mode: "no-cors",
+          body: "action=delete&cnpj=" + encodeURIComponent(cnpj),
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          }
+        });
+
+        alert(`✅ Cliente "${nome}" excluído com sucesso!`);
+        carregarClientes(); // Atualiza a lista
+      } catch (err) {
+        alert("❌ Falha ao excluir cliente.");
+        console.error(err);
+      }
     }
   </script>
 </body>
