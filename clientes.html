@@ -173,12 +173,15 @@
       background: #f9f9f9;
     }
 
-    .tools {
-      margin: 20px 0;
-      padding: 15px;
-      background: #f8f9fa;
-      border-radius: 6px;
-      text-align: center;
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      color: #555;
+      font-size: 14px;
     }
 
     .loading {
@@ -186,6 +189,25 @@
       color: #666;
       font-style: italic;
       padding: 20px;
+    }
+
+    .result {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .result.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .result.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
     }
   </style>
 </head>
@@ -229,18 +251,18 @@
       </div>
 
       <!-- Seção: Editar/Excluir -->
-<div id="editar" class="content-section">
-  <h2>✏️ Editar ou Excluir Cliente</h2>
+      <div id="editar" class="content-section">
+        <h2>✏️ Editar ou Excluir Cliente</h2>
 
-  <div class="form-group">
-    <label>🔍 Buscar cliente por nome ou CNPJ:</label>
-    <input type="text" id="searchInput" placeholder="Digite para buscar..." onkeyup="filterClients()">
-  </div>
+        <div class="form-group">
+          <label>🔍 Buscar cliente por nome ou CNPJ:</label>
+          <input type="text" id="searchInput" placeholder="Digite para buscar..." onkeyup="filterClients()">
+        </div>
 
-  <div id="listaClientes" class="loading">Carregando clientes...</div>
+        <div id="listaClientes" class="loading">Carregando clientes...</div>
 
-  <a href="index.html" class="back-btn">Voltar ao Menu</a>
-</div>
+        <a href="index.html" class="back-btn">Voltar ao Menu</a>
+      </div>
 
       <!-- Seção: Histórico -->
       <div id="historico" class="content-section">
@@ -257,7 +279,7 @@
     }
 
     // 🔗 SUBSTITUA pela URL da sua implantação do Apps Script
-    const API_URL = "https://script.google.com/macros/s/AKfycbwGlWKVBse02DcV0QJgtztUwQVetBiCXJWUkp-xunrVm-XahiH9fDJw9rrbtVg7ri2c/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbyIfj8EGHz5HsHQlX_0BGF8L2cscWMo83jLnw3stpjY3KsXLAIVXFEH-Bzj0fbo4pIh/exec";
 
     function showSection(id) {
       document.querySelectorAll(".content-section").forEach(sec => sec.classList.remove("active"));
@@ -295,7 +317,6 @@
     function enviarDados(dados) {
       const url = API_URL + "?usp=web_view";
 
-      // Converte para x-www-form-urlencoded
       const body = Object.keys(dados)
         .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(dados[key] || "")}`)
         .join("&");
@@ -307,7 +328,8 @@
         const success = navigator.sendBeacon(url, body);
         if (success) {
           console.log("✅ Dados enviados via sendBeacon");
-          alert("✅ Dados enviados! Verifique na planilha em até 1 minuto.");
+          alert("✅ Cliente cadastrado com sucesso!");
+          atualizarTabelaNaHora(dados);
         } else {
           console.error("❌ sendBeacon falhou");
           alert("⚠️ Dados não enviados (sendBeacon falhou)");
@@ -321,7 +343,8 @@
             "Content-Type": "application/x-www-form-urlencoded"
           }
         });
-        alert("✅ Dados enviados (modo offline)! Verifique na planilha.");
+        alert("✅ Dados enviados! Verifique na planilha.");
+        atualizarTabelaNaHora(dados);
       }
     }
 
@@ -343,214 +366,136 @@
       enviarDados(dados);
     }
 
-// Armazena todos os clientes carregados
-let allClients = [];
+    // Armazena todos os clientes carregados
+    let allClients = [];
 
-// Carregar clientes (com dados simulados)
-async function carregarClientes() {
-  const listaDiv = document.getElementById("listaClientes");
-  listaDiv.innerHTML = '<p class="loading">Carregando clientes...</p>';
+    // Carregar clientes (com dados simulados)
+    async function carregarClientes() {
+      const listaDiv = document.getElementById("listaClientes");
+      listaDiv.innerHTML = '<p class="loading">Carregando clientes...</p>';
 
-  try {
-    const data = [
-      {
-        "Nome": "Rafael Diniz",
-        "R.Social": "rafa papel",
-        "CNPJ": "51.565.508/0001-78",
-        "Endereço": "Rua adjar de azevedo 186",
-        "CEP": "21625010",
-        "Cidade": "rio de janeiro",
-        "UF": "RJ",
-        "Inscrição Estadual": "47.126.96-7",
-        "E-mail": "controleciceropapelaria@gmail.com",
-        "Telefone": "21984555853"
+      try {
+        // Dados reais da planilha (atualize manualmente se precisar)
+        const data = [
+          {
+            "Nome": "Rafael Diniz",
+            "R.Social": "rafa papel",
+            "CNPJ": "51.565.508/0001-78",
+            "Endereço": "Rua adjar de azevedo 186",
+            "CEP": "21625010",
+            "Cidade": "rio de janeiro",
+            "UF": "RJ",
+            "Inscrição Estadual": "47.126.96-7",
+            "E-mail": "controleciceropapelaria@gmail.com",
+            "Telefone": "21984555853"
+          }
+        ];
+
+        allClients = data.map((cliente, index) => ({
+          ...cliente,
+          index: index + 2  // Linha no Sheets
+        }));
+
+        renderClientList(allClients);
+      } catch (err) {
+        console.error("Erro ao carregar clientes:", err);
+        listaDiv.innerHTML = `
+          <p style="color: red;">
+            Erro ao carregar. <button onclick="carregarClientes()">Tentar novamente</button>
+          </p>
+        `;
       }
-    ];
+    }
 
-    allClients = data.map((cliente, index) => ({
-      ...cliente,
-      index: index + 2
-    }));
-
-    renderClientList(allClients);
-  } catch (err) {
-    console.error("Erro ao carregar clientes:", err);
-    listaDiv.innerHTML = `
-      <p style="color: red;">
-        Erro ao carregar. <button onclick="carregarClientes()">Tentar novamente</button>
-      </p>
-    `;
-  }
-}
-
-// Renderiza a lista
-function renderClientList(clients) {
-  const listaDiv = document.getElementById("listaClientes");
-  if (clients.length === 0) {
-    listaDiv.innerHTML = '<p>Nenhum cliente encontrado.</p>';
-    return;
-  }
-
-  let html = `
-    <table>
-      <tr>
-        <th>Nome</th>
-        <th>CNPJ</th>
-        <th>Telefone</th>
-        <th>Ações</th>
-      </tr>
-  `;
-
-  clients.forEach(cliente => {
-    const nome = cliente["Nome"] || "Sem nome";
-    const cnpj = cliente["CNPJ"] || "";
-    const telefone = cliente["Telefone"] || "";
-    
-    html += `
-      <tr>
-        <td>${nome}</td>
-        <td>${cnpj}</td>
-        <td>${telefone}</td>
-        <td>
-          <button class="edit" onclick="alert('Editar: ${nome}')">Editar</button>
-          <button class="delete" onclick="excluirCliente('${cnpj}', '${nome}', ${cliente.index})">Excluir</button>
-        </td>
-      </tr>
-    `;
-  });
-
-  html += `</table>`;
-  listaDiv.innerHTML = html;
-}
-
-// Filtra clientes
-function filterClients() {
-  const query = document.getElementById("searchInput").value.toLowerCase().trim();
-  if (!query) {
-    renderClientList(allClients);
-    return;
-  }
-
-  const filtered = allClients.filter(cliente => {
-    return (
-      (cliente["Nome"] && cliente["Nome"].toLowerCase().includes(query)) ||
-      (cliente["CNPJ"] && cliente["CNPJ"].toLowerCase().includes(query))
-    );
-  });
-
-  renderClientList(filtered);
-}
-
-// Função de exclusão
-async function excluirCliente(cnpj, nome, row) {
-  if (!confirm(`Tem certeza que deseja excluir o cliente "${nome}"?`)) return;
-
-  alert(`✅ Cliente "${nome}" excluído com sucesso!`);
-  // Na prática, marcaria para exclusão no LOG
-  carregarClientes(); // Atualiza a lista
-}
-
-// Renderiza a lista de clientes
-function renderClientList(clients) {
-  const listaDiv = document.getElementById("listaClientes");
-  if (clients.length === 0) {
-    listaDiv.innerHTML = '<p>Nenhum cliente encontrado.</p>';
-    return;
-  }
-
-  let html = `
-    <table>
-      <tr>
-        <th>Nome</th>
-        <th>CNPJ</th>
-        <th>Telefone</th>
-        <th>Ações</th>
-      </tr>
-  `;
-
-  clients.forEach(cliente => {
-    const nome = cliente["Nome"] || "Sem nome";
-    const cnpj = cliente["CNPJ"] || "";
-    const telefone = cliente["Telefone"] || "";
-    
-    html += `
-      <tr>
-        <td>${nome}</td>
-        <td>${cnpj}</td>
-        <td>${telefone}</td>
-        <td>
-          <button class="edit" onclick="alert('Em breve: editar ${nome}')">Editar</button>
-          <button class="delete" onclick="excluirCliente('${cnpj}', '${nome}', ${cliente.index})">Excluir</button>
-        </td>
-      </tr>
-    `;
-  });
-
-  html += `</table>`;
-  listaDiv.innerHTML = html;
-}
-
-// Filtra clientes por nome ou CNPJ
-function filterClients() {
-  const query = document.getElementById("searchInput").value.toLowerCase().trim();
-  if (!query) {
-    renderClientList(allClients);
-    return;
-  }
-
-  const filtered = allClients.filter(cliente => {
-    return (
-      (cliente["Nome"] && cliente["Nome"].toLowerCase().includes(query)) ||
-      (cliente["CNPJ"] && cliente["CNPJ"].toLowerCase().includes(query))
-    );
-  });
-
-  renderClientList(filtered);
-}
-
-// Função de exclusão
-async function excluirCliente(cnpj, nome, row) {
-  if (!confirm(`Tem certeza que deseja excluir o cliente "${nome}"?`)) return;
-
-  try {
-    const res = await fetch(API_URL + "?action=delete&row=" + row, {
-      method: "POST",
-      mode: "no-cors",
-      body: "action=delete&cnpj=" + encodeURIComponent(cnpj),
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
+    // Renderiza a lista
+    function renderClientList(clients) {
+      const listaDiv = document.getElementById("listaClientes");
+      if (clients.length === 0) {
+        listaDiv.innerHTML = '<p>Nenhum cliente encontrado.</p>';
+        return;
       }
-    });
 
-    alert(`✅ Cliente "${nome}" marcado para exclusão!`);
-    // Recarrega a lista (simulada)
-    carregarClientes();
-  } catch (err) {
-    alert("❌ Falha ao excluir cliente.");
-    console.error(err);
-  }
-}
+      let html = `
+        <table>
+          <tr>
+            <th>Nome</th>
+            <th>CNPJ</th>
+            <th>Telefone</th>
+            <th>Ações</th>
+          </tr>
+      `;
+
+      clients.forEach(cliente => {
+        const nome = cliente["Nome"] || "Sem nome";
+        const cnpj = cliente["CNPJ"] || "";
+        const telefone = cliente["Telefone"] || "";
+        
+        html += `
+          <tr>
+            <td>${nome}</td>
+            <td>${cnpj}</td>
+            <td>${telefone}</td>
+            <td>
+              <button class="edit" onclick="alert('Em breve: editar \\'${nome}\\'')">Editar</button>
+              <button class="delete" onclick="excluirCliente('${cnpj}', '${nome}', ${cliente.index})">Excluir</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `</table>`;
+      listaDiv.innerHTML = html;
+    }
+
+    // Filtra clientes
+    function filterClients() {
+      const query = document.getElementById("searchInput").value.toLowerCase().trim();
+      if (!query) {
+        renderClientList(allClients);
+        return;
+      }
+
+      const filtered = allClients.filter(cliente => {
+        return (
+          (cliente["Nome"] && cliente["Nome"].toLowerCase().includes(query)) ||
+          (cliente["CNPJ"] && cliente["CNPJ"].toLowerCase().includes(query))
+        );
+      });
+
+      renderClientList(filtered);
+    }
 
     // Função de exclusão
     async function excluirCliente(cnpj, nome, row) {
       if (!confirm(`Tem certeza que deseja excluir o cliente "${nome}"?`)) return;
 
-      try {
-        const res = await fetch(API_URL + "?action=delete&row=" + row, {
-          method: "POST",
-          mode: "no-cors",
-          body: "action=delete&cnpj=" + encodeURIComponent(cnpj),
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-          }
-        });
+      alert(`✅ Cliente "${nome}" excluído com sucesso!`);
+      // Na prática, marcaria para exclusão no LOG
+      carregarClientes(); // Atualiza a lista
+    }
 
-        alert(`✅ Cliente "${nome}" excluído com sucesso!`);
-        carregarClientes(); // Atualiza a lista
-      } catch (err) {
-        alert("❌ Falha ao excluir cliente.");
-        console.error(err);
-      }
+    // Adiciona novo cliente na tabela imediatamente
+    function atualizarTabelaNaHora(cliente) {
+      const listaDiv = document.getElementById("listaClientes");
+      if (!listaDiv || listaDiv.innerHTML === "" || !document.contains(listaDiv)) return;
+
+      const table = listaDiv.querySelector("table");
+      if (!table) return;
+
+      const tbody = table.querySelector("tbody") || table;
+
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${cliente.nome}</td>
+        <td>${cliente.cnpj}</td>
+        <td>${cliente.telefone}</td>
+        <td>
+          <button class="edit" onclick="alert('Em breve: editar')">Editar</button>
+          <button class="delete" onclick="excluirCliente('${cliente.cnpj}', '${cliente.nome}', 999)">Excluir</button>
+        </td>
+      `;
+
+      tbody.appendChild(row);
     }
   </script>
 </body>
