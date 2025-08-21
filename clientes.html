@@ -338,19 +338,23 @@
     }
 
     // Carregar clientes
-    // Carregar clientes
 async function carregarClientes() {
   const listaDiv = document.getElementById("listaClientes");
   listaDiv.innerHTML = '<p class="loading">Carregando clientes...</p>';
 
   try {
-    // Usa ?action=getClients para obter JSON
-    const res = await fetch(API_URL + "?action=getClients");
+    // Usa proxy para contornar CORS
+    const PROXY_URL = "https://api.allorigins.win/get?url=";
+    const YOUR_API_URL = encodeURIComponent("https://script.google.com/macros/s/AKfycbwGlWKVBse02DcV0QJgtztUwQVetBiCXJWUkp-xunrVm-XahiH9fDJw9rrbtVg7ri2c/exec?action=getClients");
+
+    const res = await fetch(PROXY_URL + YOUR_API_URL);
     const data = await res.json();
 
-    if (!Array.isArray(data) || data.length === 0) {
-      listaDiv.innerHTML = '<p>Nenhum cliente encontrado.</p>';
-      return;
+    // O conteúdo real está em data.contents
+    const clientes = JSON.parse(data.contents);
+
+    if (!Array.isArray(clientes)) {
+      throw new Error("Resposta não é um array");
     }
 
     let table = `
@@ -363,10 +367,10 @@ async function carregarClientes() {
         </tr>
     `;
 
-    data.forEach((cliente, index) => {
-      const nome = cliente.Nome || "Sem nome";
-      const cnpj = cliente.CNPJ || "";
-      const telefone = cliente.Telefone || "";
+    clientes.forEach((cliente, index) => {
+      const nome = cliente["Nome"] || "Sem nome";
+      const cnpj = cliente["CNPJ"] || "";
+      const telefone = cliente["Telefone"] || "";
       
       table += `
         <tr>
@@ -385,8 +389,13 @@ async function carregarClientes() {
     listaDiv.innerHTML = table;
 
   } catch (err) {
-    listaDiv.innerHTML = `<p>Erro ao carregar clientes. <button onclick="carregarClientes()">Tentar novamente</button></p>`;
     console.error("Erro ao carregar clientes:", err);
+    listaDiv.innerHTML = `
+      <p style="color: red;">
+        Erro: ${err.message}<br>
+        <button onclick="carregarClientes()" style="margin-top: 10px;">Tentar novamente</button>
+      </p>
+    `;
   }
 }
 
