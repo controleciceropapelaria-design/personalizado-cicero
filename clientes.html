@@ -338,23 +338,42 @@
     }
 
     // Carregar clientes
+// Carregar clientes via proxy para contornar CORS
 async function carregarClientes() {
   const listaDiv = document.getElementById("listaClientes");
   listaDiv.innerHTML = '<p class="loading">Carregando clientes...</p>';
 
   try {
-    // Usa proxy para contornar CORS
-    const PROXY_URL = "https://api.allorigins.win/get?url=";
-    const YOUR_API_URL = encodeURIComponent("https://script.google.com/macros/s/AKfycbwGlWKVBse02DcV0QJgtztUwQVetBiCXJWUkp-xunrVm-XahiH9fDJw9rrbtVg7ri2c/exec?action=getClients");
+    // URL da sua API do Google Apps Script
+    const YOUR_API_URL = "https://script.google.com/macros/s/AKfycbwGlWKVBse02DcV0QJgtztUwQVetBiCXJWUkp-xunrVm-XahiH9fDJw9rrbtVg7ri2c/exec";
 
-    const res = await fetch(PROXY_URL + YOUR_API_URL);
-    const data = await res.json();
+    // Usa corsproxy.io para pular o CORS
+    const PROXY_URL = "https://api.corsproxy.io/?";
+    const FINAL_URL = PROXY_URL + encodeURIComponent(YOUR_API_URL + "?action=getClients&t=" + Date.now());
 
-    // O conteúdo real está em data.contents
-    const clientes = JSON.parse(data.contents);
+    const res = await fetch(FINAL_URL);
+
+    if (!res.ok) {
+      throw new Error(`Erro HTTP: ${res.status}`);
+    }
+
+    const data = await res.text(); // O corsproxy pode retornar como texto
+
+    // Tenta converter em JSON
+    let clientes;
+    try {
+      clientes = JSON.parse(data);
+    } catch (jsonError) {
+      throw new Error("Resposta não é JSON válido: " + data.substring(0, 100));
+    }
 
     if (!Array.isArray(clientes)) {
-      throw new Error("Resposta não é um array");
+      throw new Error("Resposta não é um array de clientes");
+    }
+
+    if (clientes.length === 0) {
+      listaDiv.innerHTML = '<p>Nenhum cliente encontrado.</p>';
+      return;
     }
 
     let table = `
@@ -392,7 +411,7 @@ async function carregarClientes() {
     console.error("Erro ao carregar clientes:", err);
     listaDiv.innerHTML = `
       <p style="color: red;">
-        Erro: ${err.message}<br>
+        Falha ao carregar: ${err.message}<br>
         <button onclick="carregarClientes()" style="margin-top: 10px;">Tentar novamente</button>
       </p>
     `;
