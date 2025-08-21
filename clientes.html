@@ -261,6 +261,45 @@
 
         <div id="listaClientes" class="loading">Carregando clientes...</div>
 
+        <!-- Modal de Edição -->
+        <div id="editModal" style="display:none; margin-top:20px; padding:20px; border:1px solid #ddd; border-radius:8px; background:#f9f9f9;">
+          <h3>✏️ Editar Cliente</h3>
+          <input type="hidden" id="editRowIndex">
+          
+          <label>Nome:</label>
+          <input type="text" id="editNome" required style="margin-bottom:10px">
+
+          <label>R. Social:</label>
+          <input type="text" id="editRSocial" required style="margin-bottom:10px">
+
+          <label>CNPJ:</label>
+          <input type="text" id="editCNPJ" required style="margin-bottom:10px">
+
+          <label>Endereço:</label>
+          <input type="text" id="editEndereco" required style="margin-bottom:10px">
+
+          <label>CEP:</label>
+          <input type="text" id="editCEP" required style="margin-bottom:10px">
+
+          <label>Cidade:</label>
+          <input type="text" id="editCidade" required style="margin-bottom:10px">
+
+          <label>UF:</label>
+          <input type="text" id="editUF" maxlength="2" required style="margin-bottom:10px">
+
+          <label>Inscrição Estadual:</label>
+          <input type="text" id="editInscricao" style="margin-bottom:10px">
+
+          <label>E-mail:</label>
+          <input type="email" id="editEmail" required style="margin-bottom:10px">
+
+          <label>Telefone:</label>
+          <input type="text" id="editTelefone" required style="margin-bottom:10px">
+
+          <button onclick="salvarEdicao()" style="background:#1abc9c; color:white; padding:10px; margin-right:10px">💾 Salvar</button>
+          <button onclick="fecharEdicao()" style="background:#95a5a6; color:white; padding:10px">Cancelar</button>
+        </div>
+
         <a href="index.html" class="back-btn">Voltar ao Menu</a>
       </div>
 
@@ -279,7 +318,7 @@
     }
 
     // 🔗 SUBSTITUA pela URL da sua implantação do Apps Script
-    const API_URL = "https://script.google.com/macros/s/AKfycbyIfj8EGHz5HsHQlX_0BGF8L2cscWMo83jLnw3stpjY3KsXLAIVXFEH-Bzj0fbo4pIh/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbwGlWKVBse02DcV0QJgtztUwQVetBiCXJWUkp-xunrVm-XahiH9fDJw9rrbtVg7ri2c/exec";
 
     function showSection(id) {
       document.querySelectorAll(".content-section").forEach(sec => sec.classList.remove("active"));
@@ -436,7 +475,7 @@
             <td>${cnpj}</td>
             <td>${telefone}</td>
             <td>
-              <button class="edit" onclick="alert('Em breve: editar \\'${nome}\\'')">Editar</button>
+              <button class="edit" onclick="abrirEdicao('${cnpj}', '${nome}', ${cliente.index})">Editar</button>
               <button class="delete" onclick="excluirCliente('${cnpj}', '${nome}', ${cliente.index})">Excluir</button>
             </td>
           </tr>
@@ -465,19 +504,121 @@
       renderClientList(filtered);
     }
 
+    // Abre o formulário de edição
+    function abrirEdicao(cnpj, nome, rowIndex) {
+      const cliente = allClients.find(c => c["CNPJ"] === cnpj);
+      if (!cliente) return;
+
+      document.getElementById("editModal").style.display = "block";
+      document.getElementById("editRowIndex").value = rowIndex;
+      document.getElementById("editNome").value = cliente["Nome"] || "";
+      document.getElementById("editRSocial").value = cliente["R.Social"] || "";
+      document.getElementById("editCNPJ").value = cliente["CNPJ"] || "";
+      document.getElementById("editEndereco").value = cliente["Endereço"] || "";
+      document.getElementById("editCEP").value = cliente["CEP"] || "";
+      document.getElementById("editCidade").value = cliente["Cidade"] || "";
+      document.getElementById("editUF").value = cliente["UF"] || "";
+      document.getElementById("editInscricao").value = cliente["Inscrição Estadual"] || "";
+      document.getElementById("editEmail").value = cliente["E-mail"] || "";
+      document.getElementById("editTelefone").value = cliente["Telefone"] || "";
+    }
+
+    // Salva a edição
+    function salvarEdicao() {
+      const rowIndex = document.getElementById("editRowIndex").value;
+      const nome = document.getElementById("editNome").value;
+      const rSocial = document.getElementById("editRSocial").value;
+      const cnpj = document.getElementById("editCNPJ").value;
+      const endereco = document.getElementById("editEndereco").value;
+      const cep = document.getElementById("editCEP").value;
+      const cidade = document.getElementById("editCidade").value;
+      const uf = document.getElementById("editUF").value;
+      const inscricao = document.getElementById("editInscricao").value;
+      const email = document.getElementById("editEmail").value;
+      const telefone = document.getElementById("editTelefone").value;
+
+      const dados = {
+        action: "update",
+        row: rowIndex,
+        nome,
+        "R.Social": rSocial,
+        cnpj,
+        endereco,
+        cep,
+        cidade,
+        uf,
+        "Inscrição Estadual": inscricao,
+        email,
+        telefone
+      };
+
+      // Envia para o Google Sheets
+      enviarDadosEdicao(dados);
+
+      // Atualiza localmente
+      const cliente = allClients.find(c => c["CNPJ"] === cnpj);
+      if (cliente) {
+        cliente["Nome"] = nome;
+        cliente["R.Social"] = rSocial;
+        cliente["Telefone"] = telefone;
+        renderClientList(allClients);
+      }
+
+      alert("✅ Alterações salvas com sucesso!");
+      fecharEdicao();
+    }
+
+    // Função de envio (pode ser melhorada depois)
+    function enviarDadosEdicao(dados) {
+      const url = API_URL + "?usp=web_view";
+      const body = Object.keys(dados)
+        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(dados[key] || "")}`)
+        .join("&");
+
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(url, body);
+      } else {
+        fetch(url, {
+          method: "POST",
+          mode: "no-cors",
+          body: body,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          }
+        });
+      }
+    }
+
     // Função de exclusão
-    async function excluirCliente(cnpj, nome, row) {
+    function excluirCliente(cnpj, nome, rowIndex) {
       if (!confirm(`Tem certeza que deseja excluir o cliente "${nome}"?`)) return;
 
+      const dados = {
+        action: "delete",
+        row: rowIndex,
+        cnpj,
+        nome
+      };
+
+      // Envia para o Google Sheets
+      enviarDadosEdicao(dados);
+
+      // Remove da lista local
+      allClients = allClients.filter(cliente => cliente["CNPJ"] !== cnpj);
+      renderClientList(allClients);
+
       alert(`✅ Cliente "${nome}" excluído com sucesso!`);
-      // Na prática, marcaria para exclusão no LOG
-      carregarClientes(); // Atualiza a lista
+    }
+
+    // Fecha o modal
+    function fecharEdicao() {
+      document.getElementById("editModal").style.display = "none";
     }
 
     // Adiciona novo cliente na tabela imediatamente
     function atualizarTabelaNaHora(cliente) {
       const listaDiv = document.getElementById("listaClientes");
-      if (!listaDiv || listaDiv.innerHTML === "" || !document.contains(listaDiv)) return;
+      if (!listaDiv || !document.contains(listaDiv)) return;
 
       const table = listaDiv.querySelector("table");
       if (!table) return;
@@ -490,7 +631,7 @@
         <td>${cliente.cnpj}</td>
         <td>${cliente.telefone}</td>
         <td>
-          <button class="edit" onclick="alert('Em breve: editar')">Editar</button>
+          <button class="edit" onclick="abrirEdicao('${cliente.cnpj}', '${cliente.nome}', 999)">Editar</button>
           <button class="delete" onclick="excluirCliente('${cliente.cnpj}', '${cliente.nome}', 999)">Excluir</button>
         </td>
       `;
