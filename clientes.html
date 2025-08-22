@@ -322,19 +322,34 @@
     document.getElementById("formCliente").addEventListener("submit", async function(e) {
   e.preventDefault();
 
+  // ✅ Verifica se todos os elementos existem
+  const nome = document.getElementById("nome");
+  const rSocial = document.getElementById("rSocial");
+  const cnpj = document.getElementById("cnpj");
+  const endereco = document.getElementById("endereco");
+  const cep = document.getElementById("cep");
+  const cidade = document.getElementById("cidade");
+  const uf = document.getElementById("uf");
+  const inscricaoEstadual = document.getElementById("inscricaoEstadual");
+  const email = document.getElementById("email");
+  const telefone = document.getElementById("telefone");
+  const formaPagamento = document.getElementById("formaPagamento");
+  const contato = document.getElementById("contato");
+
+  // ✅ Evita erro se algum campo for null
   const dados = {
-    nome: document.getElementById("nome").value,
-    rSocial: document.getElementById("rSocial").value,
-    cnpj: document.getElementById("cnpj").value,
-    endereco: document.getElementById("endereco").value,
-    cep: document.getElementById("cep").value,
-    cidade: document.getElementById("cidade").value,
-    uf: document.getElementById("uf").value,
-    inscricaoEstadual: document.getElementById("inscricaoEstadual").value,
-    email: document.getElementById("email").value,
-    telefone: document.getElementById("telefone").value,
-    formaPagamento: document.getElementById("formaPagamento").value,
-    contato: document.getElementById("contato").value
+    nome: nome ? nome.value : "",
+    rSocial: rSocial ? rSocial.value : "",
+    cnpj: cnpj ? cnpj.value : "",
+    endereco: endereco ? endereco.value : "",
+    cep: cep ? cep.value : "",
+    cidade: cidade ? cidade.value : "",
+    uf: uf ? uf.value : "",
+    inscricaoEstadual: inscricaoEstadual ? inscricaoEstadual.value : "",
+    email: email ? email.value : "",
+    telefone: telefone ? telefone.value : "",
+    formaPagamento: formaPagamento ? formaPagamento.value : "",
+    contato: contato ? contato.value : ""
   };
 
   await enviarDados(dados);
