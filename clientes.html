@@ -240,6 +240,8 @@
           <input type="text" id="inscricaoEstadual" placeholder="Inscrição Estadual" />
           <input type="email" id="email" placeholder="E-mail" />
           <input type="text" id="telefone" placeholder="Telefone" />
+          <input type="text" id="formaPagamento" placeholder="Forma de Pagamento" />
+          <input type="text" id="contato" placeholder="Contato (ex: WhatsApp)" />
           <button type="submit" class="primary">Cadastrar Cliente</button>
         </form>
 
@@ -296,6 +298,12 @@
           <label>Telefone:</label>
           <input type="text" id="editTelefone" required style="margin-bottom:10px">
 
+          <label>Forma de Pagamento:</label>
+          <input type="text" id="editFormaPagamento" style="margin-bottom:10px">
+
+          <label>Contato:</label>
+          <input type="text" id="editContato" style="margin-bottom:10px">
+
           <button onclick="salvarEdicao()" style="background:#1abc9c; color:white; padding:10px; margin-right:10px">💾 Salvar</button>
           <button onclick="fecharEdicao()" style="background:#95a5a6; color:white; padding:10px">Cancelar</button>
         </div>
@@ -317,8 +325,14 @@
       window.location.href = "login.html";
     }
 
-    // 🔗 SUBSTITUA pela URL da sua implantação do Apps Script
-    const API_URL = "https://script.google.com/macros/s/AKfycbwGlWKVBse02DcV0QJgtztUwQVetBiCXJWUkp-xunrVm-XahiH9fDJw9rrbtVg7ri2c/exec";
+    // 🔗 SUBSTITUA pela sua API Key do SheetDB
+    const SHEETDB_API = "https://sheetdb.io/api/v1/2gb68nf6en72a";
+    const SHEET_NAME = "CADASTRO DE CLIENTES";
+
+    // Monta a URL com a aba
+    function getApiUrl() {
+      return `${SHEETDB_API}/aba/${encodeURIComponent(SHEET_NAME)}`;
+    }
 
     function showSection(id) {
       document.querySelectorAll(".content-section").forEach(sec => sec.classList.remove("active"));
@@ -344,8 +358,10 @@
         cidade: document.getElementById("cidade").value,
         uf: document.getElementById("uf").value,
         "Inscrição Estadual": document.getElementById("inscricaoEstadual").value,
-        email: document.getElementById("email").value,
-        telefone: document.getElementById("telefone").value
+        "E-mail": document.getElementById("email").value,
+        "Telefone": document.getElementById("telefone").value,
+        "Forma de Pagamento": document.getElementById("formaPagamento").value,
+        "Contato": document.getElementById("contato").value
       };
 
       enviarDados(payload);
@@ -354,25 +370,16 @@
 
     // Função de envio robusto
     function enviarDados(dados) {
-      const url = API_URL + "?usp=web_view";
+      const url = getApiUrl();
 
       const body = Object.keys(dados)
         .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(dados[key] || "")}`)
         .join("&");
 
-      console.log("Enviando para:", url);
-      console.log("Dados:", body);
-
       if (navigator.sendBeacon) {
-        const success = navigator.sendBeacon(url, body);
-        if (success) {
-          console.log("✅ Dados enviados via sendBeacon");
-          alert("✅ Cliente cadastrado com sucesso!");
-          atualizarTabelaNaHora(dados);
-        } else {
-          console.error("❌ sendBeacon falhou");
-          alert("⚠️ Dados não enviados (sendBeacon falhou)");
-        }
+        navigator.sendBeacon(url, body);
+        alert("✅ Cliente cadastrado com sucesso!");
+        atualizarTabelaNaHora(dados);
       } else {
         fetch(url, {
           method: "POST",
@@ -382,7 +389,7 @@
             "Content-Type": "application/x-www-form-urlencoded"
           }
         });
-        alert("✅ Dados enviados! Verifique na planilha.");
+        alert("✅ Dados enviados!");
         atualizarTabelaNaHora(dados);
       }
     }
@@ -398,8 +405,10 @@
         cidade: "Final",
         uf: "FF",
         "Inscrição Estadual": "ISENTO",
-        email: "final@teste.com",
-        telefone: "99999-9999"
+        "E-mail": "final@teste.com",
+        "Telefone": "99999-9999",
+        "Forma de Pagamento": "Boleto",
+        "Contato": "(11) 99999-9999"
       };
 
       enviarDados(dados);
@@ -408,32 +417,25 @@
     // Armazena todos os clientes carregados
     let allClients = [];
 
-    // Carregar clientes (com dados simulados)
+    // Carregar clientes
     async function carregarClientes() {
       const listaDiv = document.getElementById("listaClientes");
       listaDiv.innerHTML = '<p class="loading">Carregando clientes...</p>';
 
       try {
-        // Dados reais da planilha (atualize manualmente se precisar)
-        const data = [
-          {
-            "Nome": "Rafael Diniz",
-            "R.Social": "rafa papel",
-            "CNPJ": "51.565.508/0001-78",
-            "Endereço": "Rua adjar de azevedo 186",
-            "CEP": "21625010",
-            "Cidade": "rio de janeiro",
-            "UF": "RJ",
-            "Inscrição Estadual": "47.126.96-7",
-            "E-mail": "controleciceropapelaria@gmail.com",
-            "Telefone": "21984555853"
-          }
-        ];
+        const res = await fetch(getApiUrl());
+        const data = await res.json();
 
-        allClients = data.map((cliente, index) => ({
-          ...cliente,
-          index: index + 2  // Linha no Sheets
-        }));
+        if (!Array.isArray(data)) {
+          throw new Error("Resposta não é um array");
+        }
+
+        if (data.length === 0) {
+          listaDiv.innerHTML = '<p>Nenhum cliente encontrado.</p>';
+          return;
+        }
+
+        allClients = data;
 
         renderClientList(allClients);
       } catch (err) {
@@ -475,8 +477,8 @@
             <td>${cnpj}</td>
             <td>${telefone}</td>
             <td>
-              <button class="edit" onclick="abrirEdicao('${cnpj}', '${nome}', ${cliente.index})">Editar</button>
-              <button class="delete" onclick="excluirCliente('${cnpj}', '${nome}', ${cliente.index})">Excluir</button>
+              <button class="edit" onclick="abrirEdicao('${cnpj}', '${nome}', ${cliente._row})">Editar</button>
+              <button class="delete" onclick="excluirCliente('${cnpj}', '${nome}', ${cliente._row})">Excluir</button>
             </td>
           </tr>
         `;
@@ -521,93 +523,67 @@
       document.getElementById("editInscricao").value = cliente["Inscrição Estadual"] || "";
       document.getElementById("editEmail").value = cliente["E-mail"] || "";
       document.getElementById("editTelefone").value = cliente["Telefone"] || "";
+      document.getElementById("editFormaPagamento").value = cliente["Forma de Pagamento"] || "";
+      document.getElementById("editContato").value = cliente["Contato"] || "";
     }
 
     // Salva a edição
-    function salvarEdicao() {
+    async function salvarEdicao() {
       const rowIndex = document.getElementById("editRowIndex").value;
-      const nome = document.getElementById("editNome").value;
-      const rSocial = document.getElementById("editRSocial").value;
-      const cnpj = document.getElementById("editCNPJ").value;
-      const endereco = document.getElementById("editEndereco").value;
-      const cep = document.getElementById("editCEP").value;
-      const cidade = document.getElementById("editCidade").value;
-      const uf = document.getElementById("editUF").value;
-      const inscricao = document.getElementById("editInscricao").value;
-      const email = document.getElementById("editEmail").value;
-      const telefone = document.getElementById("editTelefone").value;
-
       const dados = {
-        action: "update",
-        row: rowIndex,
-        nome,
-        "R.Social": rSocial,
-        cnpj,
-        endereco,
-        cep,
-        cidade,
-        uf,
-        "Inscrição Estadual": inscricao,
-        email,
-        telefone
+        nome: document.getElementById("editNome").value,
+        "R.Social": document.getElementById("editRSocial").value,
+        cnpj: document.getElementById("editCNPJ").value,
+        endereco: document.getElementById("editEndereco").value,
+        cep: document.getElementById("editCEP").value,
+        cidade: document.getElementById("editCidade").value,
+        uf: document.getElementById("editUF").value,
+        "Inscrição Estadual": document.getElementById("editInscricao").value,
+        "E-mail": document.getElementById("editEmail").value,
+        "Telefone": document.getElementById("editTelefone").value,
+        "Forma de Pagamento": document.getElementById("editFormaPagamento").value,
+        "Contato": document.getElementById("editContato").value
       };
 
-      // Envia para o Google Sheets
-      enviarDadosEdicao(dados);
-
-      // Atualiza localmente
-      const cliente = allClients.find(c => c["CNPJ"] === cnpj);
-      if (cliente) {
-        cliente["Nome"] = nome;
-        cliente["R.Social"] = rSocial;
-        cliente["Telefone"] = telefone;
-        renderClientList(allClients);
-      }
-
-      alert("✅ Alterações salvas com sucesso!");
-      fecharEdicao();
-    }
-
-    // Função de envio (pode ser melhorada depois)
-    function enviarDadosEdicao(dados) {
-      const url = API_URL + "?usp=web_view";
-      const body = Object.keys(dados)
-        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(dados[key] || "")}`)
-        .join("&");
-
-      if (navigator.sendBeacon) {
-        navigator.sendBeacon(url, body);
-      } else {
-        fetch(url, {
-          method: "POST",
-          mode: "no-cors",
-          body: body,
+      try {
+        const res = await fetch(`${getApiUrl()}/${rowIndex}`, {
+          method: 'PATCH',
           headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-          }
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(dados)
         });
+
+        if (res.ok) {
+          alert("✅ Cliente atualizado com sucesso!");
+          fecharEdicao();
+          carregarClientes();
+        } else {
+          throw new Error("Falha ao atualizar");
+        }
+      } catch (err) {
+        alert("❌ Erro ao salvar");
       }
     }
 
     // Função de exclusão
-    function excluirCliente(cnpj, nome, rowIndex) {
+    async function excluirCliente(cnpj, nome, rowIndex) {
       if (!confirm(`Tem certeza que deseja excluir o cliente "${nome}"?`)) return;
 
-      const dados = {
-        action: "delete",
-        row: rowIndex,
-        cnpj,
-        nome
-      };
+      try {
+        const res = await fetch(`${getApiUrl()}/${rowIndex}`, {
+          method: 'DELETE'
+        });
 
-      // Envia para o Google Sheets
-      enviarDadosEdicao(dados);
-
-      // Remove da lista local
-      allClients = allClients.filter(cliente => cliente["CNPJ"] !== cnpj);
-      renderClientList(allClients);
-
-      alert(`✅ Cliente "${nome}" excluído com sucesso!`);
+        if (res.ok) {
+          alert(`✅ Cliente "${nome}" excluído com sucesso!`);
+          carregarClientes();
+        } else {
+          throw new Error("Falha ao excluir");
+        }
+      } catch (err) {
+        alert("❌ Erro ao excluir cliente");
+      }
     }
 
     // Fecha o modal
