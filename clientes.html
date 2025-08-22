@@ -360,7 +360,7 @@
   async function enviarDados(dadosForm) {
     const payload = {
     Nome: dadosForm.nome,
-    "R.Social": dadosForm.RSocial,
+    "Razao Social": dadosForm.rSocial,
     CNPJ: dadosForm.cnpj,
     Endereço: dadosForm.endereco,
     CEP: dadosForm.cep,
@@ -509,7 +509,7 @@
 
       const dados = {
         Nome: document.getElementById("editNome").value,
-        "R.Social": document.getElementById("editRSocial").value,
+        "Razao Social": document.getElementById("editRSocial").value,
         CNPJ: cnpjNovo,
         Endereço: document.getElementById("editEndereco").value,
         CEP: document.getElementById("editCEP").value,
