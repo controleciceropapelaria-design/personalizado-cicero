@@ -243,7 +243,7 @@
         <!-- Modal de Edição -->
         <div id="editModal" style="display:none; margin-top:20px; padding:20px; border:1px solid #ddd; border-radius:8px; background:#f9f9f9;">
           <h3>✏️ Editar Cliente</h3>
-          <input type="hidden" id="editRowIndex">
+          <input type="hidden" id="editCNPJAtual">
           
           <label>Nome:</label>
           <input type="text" id="editNome" required style="margin-bottom:10px">
@@ -303,8 +303,8 @@
       window.location.href = "login.html";
     }
 
-    // 🔗 SUBSTITUA pela sua API Key do SheetDB
-    const API_URL = "https://sheetdb.io/api/v1/jgx0xcl6f8z5s"; // 🔥 COLE SUA CHAVE AQUI
+    // 🔗 API do SheetDB
+    const API_URL = "https://sheetdb.io/api/v1/jgx0xcl6f8z5s"; // ✅ Sua chave correta
 
     // Função para mostrar seção
     function showSection(id) {
@@ -322,7 +322,7 @@
     document.getElementById("formCliente").addEventListener("submit", async function(e) {
       e.preventDefault();
 
-      const payload = {
+      const dados = {
         nome: document.getElementById("nome").value,
         rSocial: document.getElementById("rSocial").value,
         cnpj: document.getElementById("cnpj").value,
@@ -337,7 +337,7 @@
         contato: document.getElementById("contato").value
       };
 
-      await enviarDados(payload);
+      await enviarDados(dados);
       this.reset();
     });
 
@@ -381,9 +381,7 @@
           throw new Error("Resposta não é um array");
         }
 
-        // Armazena todos os clientes
         window.allClients = data;
-
         renderClientList(data);
       } catch (err) {
         console.error("Erro ao carregar clientes:", err);
@@ -425,7 +423,7 @@
             <td>${telefone}</td>
             <td>
               <button class="edit" onclick="abrirEdicao('${cnpj}')">Editar</button>
-              <button class="delete" onclick="excluirCliente(${cliente._row})">Excluir</button>
+              <button class="delete" onclick="excluirCliente('${cnpj}')">Excluir</button>
             </td>
           </tr>
         `;
@@ -459,7 +457,7 @@
       if (!cliente) return;
 
       document.getElementById("editModal").style.display = "block";
-      document.getElementById("editRowIndex").value = cliente._row;
+      document.getElementById("editCNPJAtual").value = cnpj;
       document.getElementById("editNome").value = cliente.Nome || "";
       document.getElementById("editRSocial").value = cliente["R.Social"] || "";
       document.getElementById("editCNPJ").value = cliente.CNPJ || "";
@@ -476,11 +474,13 @@
 
     // Salva a edição
     async function salvarEdicao() {
-      const rowIndex = document.getElementById("editRowIndex").value;
+      const cnpjAtual = document.getElementById("editCNPJAtual").value;
+      const cnpjNovo = document.getElementById("editCNPJ").value;
+
       const dados = {
         Nome: document.getElementById("editNome").value,
         "R.Social": document.getElementById("editRSocial").value,
-        CNPJ: document.getElementById("editCNPJ").value,
+        CNPJ: cnpjNovo,
         Endereço: document.getElementById("editEndereco").value,
         CEP: document.getElementById("editCEP").value,
         Cidade: document.getElementById("editCidade").value,
@@ -493,7 +493,8 @@
       };
 
       try {
-        const res = await fetch(`${API_URL}/${rowIndex}`, {
+        // ✅ Edita por CNPJ
+        const res = await fetch(`${API_URL}/search?CNPJ=${encodeURIComponent(cnpjAtual)}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json'
@@ -517,11 +518,11 @@
     }
 
     // Função de exclusão
-    async function excluirCliente(rowIndex) {
+    async function excluirCliente(cnpj) {
       if (!confirm("Tem certeza que deseja excluir este cliente?")) return;
 
       try {
-        const res = await fetch(`${API_URL}/${rowIndex}`, {
+        const res = await fetch(`${API_URL}/search?CNPJ=${encodeURIComponent(cnpj)}`, {
           method: 'DELETE'
         });
 
