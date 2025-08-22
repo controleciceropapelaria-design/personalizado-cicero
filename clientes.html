@@ -212,7 +212,7 @@
         <h2>➕ Adicionar Novo Cliente</h2>
         <form id="formCliente">
           <input type="text" id="nome" placeholder="Nome" required />
-          <input type="text" id="RSocial" placeholder="Razão Social" />
+          <input type="text" id="RazaoSocial" placeholder="Razão Social" />
           <input type="text" id="cnpj" placeholder="CNPJ" />
           <input type="text" id="endereco" placeholder="Endereço" />
           <input type="text" id="cep" placeholder="CEP" />
@@ -248,8 +248,8 @@
           <label>Nome:</label>
           <input type="text" id="editNome" required style="margin-bottom:10px">
 
-          <label>R. Social:</label>
-          <input type="text" id="editRSocial" required style="margin-bottom:10px">
+          <label>Razao Social:</label>
+          <input type="text" id="editRazaoSocial" required style="margin-bottom:10px">
 
           <label>CNPJ:</label>
           <input type="text" id="editCNPJ" required style="margin-bottom:10px">
@@ -324,7 +324,7 @@
 
   // ✅ Verifica se todos os elementos existem
   const nome = document.getElementById("nome");
-  const rSocial = document.getElementById("rSocial");
+  const RazaoSocial = document.getElementById("RazaoSocial");
   const cnpj = document.getElementById("cnpj");
   const endereco = document.getElementById("endereco");
   const cep = document.getElementById("cep");
@@ -339,7 +339,7 @@
   // ✅ Evita erro se algum campo for null
   const dados = {
     nome: nome ? nome.value : "",
-    rSocial: rSocial ? rSocial.value : "",
+    RazaoSocial: RazaoSocial ? RazaoSocial.value : "",
     cnpj: cnpj ? cnpj.value : "",
     endereco: endereco ? endereco.value : "",
     cep: cep ? cep.value : "",
@@ -360,7 +360,7 @@
   async function enviarDados(dadosForm) {
     const payload = {
     Nome: dadosForm.nome,
-    "Razao Social": dadosForm.rSocial,
+    "Razao Social": dadosForm.RazaoSocial,
     CNPJ: dadosForm.cnpj,
     Endereço: dadosForm.endereco,
     CEP: dadosForm.cep,
@@ -489,7 +489,7 @@
       document.getElementById("editModal").style.display = "block";
       document.getElementById("editCNPJAtual").value = cnpj;
       document.getElementById("editNome").value = cliente.Nome || "";
-      document.getElementById("editRSocial").value = cliente["R.Social"] || "";
+      document.getElementById("editRazaoSocial").value = cliente["R.Social"] || "";
       document.getElementById("editCNPJ").value = cliente.CNPJ || "";
       document.getElementById("editEndereco").value = cliente.Endereço || "";
       document.getElementById("editCEP").value = cliente.CEP || "";
@@ -509,7 +509,7 @@
 
       const dados = {
         Nome: document.getElementById("editNome").value,
-        "Razao Social": document.getElementById("editRSocial").value,
+        "Razao Social": document.getElementById("editRazaoSocial").value,
         CNPJ: cnpjNovo,
         Endereço: document.getElementById("editEndereco").value,
         CEP: document.getElementById("editCEP").value,
