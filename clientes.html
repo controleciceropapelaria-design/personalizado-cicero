@@ -342,8 +342,8 @@
 
     // Função de envio robusto
   function enviarDados(dados) {
-  // Use os nomes EXATOS da planilha (case-sensitive)
-    const payload = {
+  // Use os nomes EXATOS da planilha
+  const payload = {
     Nome: dados.nome,
     "R.Social": dados["R.Social"],
     CNPJ: dados.cnpj,
@@ -356,28 +356,28 @@
     Telefone: dados.telefone,
     "Forma de Pagamento": dados["Forma de Pagamento"],
     Contato: dados.contato
-    };
+  };
 
-    const body = Object.keys(payload)
+  const body = Object.keys(payload)
     .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(payload[key] || "")}`)
     .join("&");
 
-    fetch(API_URL, {
+  fetch(API_URL, {
     method: "POST",
     mode: "no-cors",
     body: body,
     headers: {
       "Content-Type": "application/x-www-form-urlencoded"
     }
-    })
-    .then(() => {
+  })
+  .then(() => {
     alert("✅ Cliente cadastrado com sucesso!");
     atualizarTabelaNaHora(dados);
-    })
-    .catch(err => {
+  })
+  .catch(err => {
     console.error("Erro ao cadastrar:", err);
     alert("❌ Falha ao enviar. Veja o console.");
-    });
+  });
 }
 
    
@@ -496,52 +496,51 @@
 
     // Salva a edição
   async function salvarEdicao() {
-    const rowIndex = document.getElementById("editRowIndex").value;
-    const cnpj = document.getElementById("editCNPJ").value;
+  const cnpj = document.getElementById("editCNPJ").value;
 
-    if (!cnpj) {
-      alert("CNPJ é obrigatório");
-      return;
+  if (!cnpj) {
+    alert("CNPJ é obrigatório");
+    return;
+  }
+
+  const dados = {
+    Nome: document.getElementById("editNome").value,
+    "R.Social": document.getElementById("editRSocial").value,
+    CNPJ: cnpj,
+    Endereço: document.getElementById("editEndereco").value,
+    CEP: document.getElementById("editCEP").value,
+    Cidade: document.getElementById("editCidade").value,
+    UF: document.getElementById("editUF").value,
+    "Inscrição Estadual": document.getElementById("editInscricao").value,
+    "E-mail": document.getElementById("editEmail").value,
+    Telefone: document.getElementById("editTelefone").value,
+    "Forma de Pagamento": document.getElementById("editFormaPagamento").value,
+    Contato: document.getElementById("editContato").value
+  };
+
+  try {
+    // ✅ URL correta para editar por CNPJ
+    const res = await fetch(`${API_URL}/search?CNPJ=${encodeURIComponent(cnpj)}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(dados)
+    });
+
+    if (res.ok) {
+      alert("✅ Cliente atualizado com sucesso!");
+      fecharEdicao();
+      carregarClientes(); // Atualiza a lista
+    } else {
+      const text = await res.text();
+      console.error("Erro no PATCH:", res.status, text);
+      alert(`❌ Erro ${res.status}: ${text}`);
     }
-
-    const dados = {
-      Nome: document.getElementById("editNome").value,
-      "R.Social": document.getElementById("editRSocial").value,
-      CNPJ: cnpj,
-      Endereço: document.getElementById("editEndereco").value,
-      CEP: document.getElementById("editCEP").value,
-      Cidade: document.getElementById("editCidade").value,
-      UF: document.getElementById("editUF").value,
-      "Inscrição Estadual": document.getElementById("editInscricao").value,
-      "E-mail": document.getElementById("editEmail").value,
-      Telefone: document.getElementById("editTelefone").value,
-      "Forma de Pagamento": document.getElementById("editFormaPagamento").value,
-      Contato: document.getElementById("editContato").value
-    };
-
-    try {
-      // Edita por CNPJ (mais confiável que _row)
-      const res = await fetch(`${API_URL}/search/CNPJ/${encodeURIComponent(cnpj)}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(dados)
-      });
-
-      if (res.ok) {
-        alert("✅ Cliente atualizado com sucesso!");
-        fecharEdicao();
-        carregarClientes();
-      } else {
-        const text = await res.text();
-        console.error("Erro no PATCH:", res.status, text);
-        alert(`❌ Erro ${res.status}: ${text}`);
-      }
-    } catch (err) {
-      console.error("Erro ao salvar edição:", err);
-      alert("❌ Erro ao salvar. Veja o console.");
-    }
+  } catch (err) {
+    console.error("Erro ao salvar edição:", err);
+    alert("❌ Erro ao salvar. Veja o console.");
+  }
 }
     // Função de exclusão
     async function excluirCliente(cnpj, nome, rowIndex) {
