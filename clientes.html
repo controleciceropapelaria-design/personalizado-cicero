@@ -190,25 +190,6 @@
       font-style: italic;
       padding: 20px;
     }
-
-    .result {
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 4px;
-      font-size: 14px;
-    }
-
-    .result.success {
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
-    }
-
-    .result.error {
-      background: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
-    }
   </style>
 </head>
 <body>
@@ -326,13 +307,8 @@
     }
 
     // 🔗 SUBSTITUA pela sua API Key do SheetDB
-    const SHEETDB_API = "https://sheetdb.io/api/v1/2gb68nf6en72a";
-    const SHEET_NAME = "CADASTRO DE CLIENTES";
-
-    // Monta a URL com a aba
-    function getApiUrl() {
-      return `${SHEETDB_API}/aba/${encodeURIComponent(SHEET_NAME)}`;
-    }
+    // Ex: https://sheetdb.io/api/v1/abc123def456ghi789
+    const API_URL = "https://sheetdb.io/api/v1/jgx0xcl6f8z5s"; // 🔥 COLE SUA CHAVE AQUI
 
     function showSection(id) {
       document.querySelectorAll(".content-section").forEach(sec => sec.classList.remove("active"));
@@ -370,18 +346,16 @@
 
     // Função de envio robusto
     function enviarDados(dados) {
-      const url = getApiUrl();
-
       const body = Object.keys(dados)
         .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(dados[key] || "")}`)
         .join("&");
 
       if (navigator.sendBeacon) {
-        navigator.sendBeacon(url, body);
+        navigator.sendBeacon(API_URL, body);
         alert("✅ Cliente cadastrado com sucesso!");
         atualizarTabelaNaHora(dados);
       } else {
-        fetch(url, {
+        fetch(API_URL, {
           method: "POST",
           mode: "no-cors",
           body: body,
@@ -423,7 +397,7 @@
       listaDiv.innerHTML = '<p class="loading">Carregando clientes...</p>';
 
       try {
-        const res = await fetch(getApiUrl());
+        const res = await fetch(API_URL);
         const data = await res.json();
 
         if (!Array.isArray(data)) {
@@ -546,7 +520,7 @@
       };
 
       try {
-        const res = await fetch(`${getApiUrl()}/${rowIndex}`, {
+        const res = await fetch(`${API_URL}/${rowIndex}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json'
@@ -571,7 +545,7 @@
       if (!confirm(`Tem certeza que deseja excluir o cliente "${nome}"?`)) return;
 
       try {
-        const res = await fetch(`${getApiUrl()}/${rowIndex}`, {
+        const res = await fetch(`${API_URL}/${rowIndex}`, {
           method: 'DELETE'
         });
 
