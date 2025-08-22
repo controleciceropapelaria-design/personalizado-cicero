@@ -212,7 +212,7 @@
         <h2>➕ Adicionar Novo Cliente</h2>
         <form id="formCliente">
           <input type="text" id="nome" placeholder="Nome" required />
-          <input type="text" id="rSocial" placeholder="Razão Social" />
+          <input type="text" id="RSocial" placeholder="Razão Social" />
           <input type="text" id="cnpj" placeholder="CNPJ" />
           <input type="text" id="endereco" placeholder="Endereço" />
           <input type="text" id="cep" placeholder="CEP" />
@@ -320,53 +320,68 @@
 
     // Enviar formulário
     document.getElementById("formCliente").addEventListener("submit", async function(e) {
-      e.preventDefault();
+  e.preventDefault();
 
-      const dados = {
-        nome: document.getElementById("nome").value,
-        rSocial: document.getElementById("rSocial").value,
-        cnpj: document.getElementById("cnpj").value,
-        endereco: document.getElementById("endereco").value,
-        cep: document.getElementById("cep").value,
-        cidade: document.getElementById("cidade").value,
-        uf: document.getElementById("uf").value,
-        inscricaoEstadual: document.getElementById("inscricaoEstadual").value,
-        email: document.getElementById("email").value,
-        telefone: document.getElementById("telefone").value,
-        formaPagamento: document.getElementById("formaPagamento").value,
-        contato: document.getElementById("contato").value
-      };
+  const dados = {
+    nome: document.getElementById("nome").value,
+    rSocial: document.getElementById("rSocial").value,
+    cnpj: document.getElementById("cnpj").value,
+    endereco: document.getElementById("endereco").value,
+    cep: document.getElementById("cep").value,
+    cidade: document.getElementById("cidade").value,
+    uf: document.getElementById("uf").value,
+    inscricaoEstadual: document.getElementById("inscricaoEstadual").value,
+    email: document.getElementById("email").value,
+    telefone: document.getElementById("telefone").value,
+    formaPagamento: document.getElementById("formaPagamento").value,
+    contato: document.getElementById("contato").value
+  };
 
-      await enviarDados(dados);
-      this.reset();
-    });
+  await enviarDados(dados);
+  this.reset();
+});
 
     // Enviar dados para o SheetDB
-    async function enviarDados(dados) {
-      try {
-        const res = await fetch(API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(dados)
-        });
+  async function enviarDados(dadosForm) {
+    const payload = {
+    Nome: dadosForm.nome,
+    "R.Social": dadosForm.RSocial,
+    CNPJ: dadosForm.cnpj,
+    Endereço: dadosForm.endereco,
+    CEP: dadosForm.cep,
+    Cidade: dadosForm.cidade,
+    UF: dadosForm.uf,
+    "Inscrição Estadual": dadosForm.inscricaoEstadual,
+    "E-mail": dadosForm.email,
+    Telefone: dadosForm.telefone,
+    "Forma de Pagamento": dadosForm.formaPagamento,
+    Contato: dadosForm.contato
+    };
 
-        if (res.ok) {
-          alert("✅ Cliente cadastrado com sucesso!");
-          if (document.getElementById("listaClientes")) {
-            carregarClientes();
-          }
-        } else {
-          const error = await res.text();
-          console.error("Erro ao cadastrar:", error);
-          alert(`❌ Erro: ${res.status}`);
-        }
-      } catch (err) {
-        console.error("Falha na conexão:", err);
-        alert("❌ Falha na conexão com o servidor.");
+    try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)  // ✅ Envia com nomes corretos
+    });
+
+    if (res.ok) {
+      alert("✅ Cliente cadastrado com sucesso!");
+      if (document.getElementById("listaClientes")) {
+        carregarClientes();
       }
+    } else {
+      const error = await res.text();
+      console.error("Erro ao cadastrar:", error);
+      alert(`❌ Erro: ${res.status} - ${error}`);
     }
+    } catch (err) {
+    console.error("Falha na conexão:", err);
+    alert("❌ Falha na conexão com o servidor.");
+    }
+}
 
     // Carregar clientes
     async function carregarClientes() {
