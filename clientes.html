@@ -319,30 +319,30 @@
 
     // Enviar formulário
     document.getElementById("formCliente").addEventListener("submit", function(e) {
-      e.preventDefault();
+  e.preventDefault();
 
-      const payload = {
-        nome: document.getElementById("nome").value,
-        "R.Social": document.getElementById("rSocial").value,
-        cnpj: document.getElementById("cnpj").value,
-        endereco: document.getElementById("endereco").value,
-        cep: document.getElementById("cep").value,
-        cidade: document.getElementById("cidade").value,
-        uf: document.getElementById("uf").value,
-        "Inscrição Estadual": document.getElementById("inscricaoEstadual").value,
-        "E-mail": document.getElementById("email").value,
-        "Telefone": document.getElementById("telefone").value,
-        "Forma de Pagamento": document.getElementById("formaPagamento").value,
-        "Contato": document.getElementById("contato").value
-      };
+  const payload = {
+    nome: document.getElementById("nome").value,
+    "R.Social": document.getElementById("rSocial").value,
+    cnpj: document.getElementById("cnpj").value,
+    endereco: document.getElementById("endereco").value,
+    cep: document.getElementById("cep").value,
+    cidade: document.getElementById("cidade").value,
+    uf: document.getElementById("uf").value,
+    "Inscrição Estadual": document.getElementById("inscricaoEstadual").value,
+    email: document.getElementById("email").value,
+    telefone: document.getElementById("telefone").value,
+    formaPagamento: document.getElementById("formaPagamento").value,
+    contato: document.getElementById("contato").value
+  };
 
-      enviarDados(payload);
-      this.reset();
-    });
+  enviarDados(payload);
+  this.reset();
+});
 
     // Função de envio robusto
   function enviarDados(dados) {
-  // Use os nomes EXATOS da planilha
+  // ✅ Use os nomes EXATOS da planilha (case-sensitive)
   const payload = {
     Nome: dados.nome,
     "R.Social": dados["R.Social"],
@@ -362,23 +362,23 @@
     .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(payload[key] || "")}`)
     .join("&");
 
-  fetch(API_URL, {
-    method: "POST",
-    mode: "no-cors",
-    body: body,
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    }
-  })
-  .then(() => {
+  if (navigator.sendBeacon) {
+    navigator.sendBeacon(API_URL, body);
     alert("✅ Cliente cadastrado com sucesso!");
     atualizarTabelaNaHora(dados);
-  })
-  .catch(err => {
-    console.error("Erro ao cadastrar:", err);
-    alert("❌ Falha ao enviar. Veja o console.");
-  });
-}
+  } else {
+    fetch(API_URL, {
+      method: "POST",
+      mode: "no-cors",
+      body: body,
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      }
+    });
+    alert("✅ Dados enviados!");
+    atualizarTabelaNaHora(dados);
+  }
+} 
 
    
     // Armazena todos os clientes carregados
