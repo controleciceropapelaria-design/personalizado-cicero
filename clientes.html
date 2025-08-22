@@ -226,10 +226,6 @@
           <button type="submit" class="primary">Cadastrar Cliente</button>
         </form>
 
-        <div class="tools">
-          <button onclick="testarEnvio()" style="background:#28a745">🔧 TESTE RÁPIDO</button>
-        </div>
-
         <a href="index.html" class="back-btn">Voltar ao Menu</a>
       </div>
 
@@ -346,27 +342,28 @@
 
     // Função de envio robusto
     function enviarDados(dados) {
-      const body = Object.keys(dados)
-        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(dados[key] || "")}`)
-        .join("&");
+  const body = Object.keys(dados)
+    .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(dados[key] || "")}`)
+    .join("&");
 
-      if (navigator.sendBeacon) {
-        navigator.sendBeacon(API_URL, body);
-        alert("✅ Cliente cadastrado com sucesso!");
-        atualizarTabelaNaHora(dados);
-      } else {
-        fetch(API_URL, {
-          method: "POST",
-          mode: "no-cors",
-          body: body,
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-          }
-        });
-        alert("✅ Dados enviados!");
-        atualizarTabelaNaHora(dados);
-      }
+  // Tenta com fetch no-cors (mostra erro no console)
+  fetch(API_URL, {
+    method: "POST",
+    mode: "no-cors",
+    body: body,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
     }
+  })
+  .then(() => {
+    alert("✅ Cliente cadastrado com sucesso!");
+    atualizarTabelaNaHora(dados);
+  })
+  .catch(err => {
+    console.error("Erro ao cadastrar:", err);
+    alert("❌ Falha ao enviar. Veja o console.");
+  });
+}
 
     // Botão de teste
     function testarEnvio() {
@@ -503,42 +500,45 @@
 
     // Salva a edição
     async function salvarEdicao() {
-      const rowIndex = document.getElementById("editRowIndex").value;
-      const dados = {
-        nome: document.getElementById("editNome").value,
-        "R.Social": document.getElementById("editRSocial").value,
-        cnpj: document.getElementById("editCNPJ").value,
-        endereco: document.getElementById("editEndereco").value,
-        cep: document.getElementById("editCEP").value,
-        cidade: document.getElementById("editCidade").value,
-        uf: document.getElementById("editUF").value,
-        "Inscrição Estadual": document.getElementById("editInscricao").value,
-        "E-mail": document.getElementById("editEmail").value,
-        "Telefone": document.getElementById("editTelefone").value,
-        "Forma de Pagamento": document.getElementById("editFormaPagamento").value,
-        "Contato": document.getElementById("editContato").value
-      };
+  const rowIndex = document.getElementById("editRowIndex").value;
+  const dados = {
+    nome: document.getElementById("editNome").value,
+    "R.Social": document.getElementById("editRSocial").value,
+    cnpj: document.getElementById("editCNPJ").value,
+    endereco: document.getElementById("editEndereco").value,
+    cep: document.getElementById("editCEP").value,
+    cidade: document.getElementById("editCidade").value,
+    uf: document.getElementById("editUF").value,
+    "Inscrição Estadual": document.getElementById("editInscricao").value,
+    "E-mail": document.getElementById("editEmail").value,
+    "Telefone": document.getElementById("editTelefone").value,
+    "Forma de Pagamento": document.getElementById("editFormaPagamento").value,
+    "Contato": document.getElementById("editContato").value
+  };
 
-      try {
-        const res = await fetch(`${API_URL}/${rowIndex}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(dados)
-        });
+  try {
+    const res = await fetch(`${API_URL}/${rowIndex}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(dados)
+    });
 
-        if (res.ok) {
-          alert("✅ Cliente atualizado com sucesso!");
-          fecharEdicao();
-          carregarClientes();
-        } else {
-          throw new Error("Falha ao atualizar");
-        }
-      } catch (err) {
-        alert("❌ Erro ao salvar");
-      }
+    if (res.ok) {
+      alert("✅ Cliente atualizado com sucesso!");
+      fecharEdicao();
+      carregarClientes(); // Recarrega os dados
+    } else {
+      const text = await res.text();
+      console.error("Erro no PATCH:", res.status, text);
+      alert(`❌ Erro ${res.status}: ${text}`);
     }
+  } catch (err) {
+    console.error("Erro ao salvar edição:", err);
+    alert("❌ Erro ao salvar. Veja o console.");
+  }
+}
 
     // Função de exclusão
     async function excluirCliente(cnpj, nome, rowIndex) {
