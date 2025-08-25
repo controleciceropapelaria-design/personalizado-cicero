@@ -360,7 +360,7 @@
   async function enviarDados(dadosForm) {
     const payload = {
     Nome: dadosForm.nome,
-    "Razao Social": dadosForm.RazaoSocial,
+    RazaoSocial: dadosForm.RazaoSocial,
     CNPJ: dadosForm.cnpj,
     Endereço: dadosForm.endereco,
     CEP: dadosForm.cep,
@@ -425,43 +425,47 @@
 
     // Renderiza a lista
     function renderClientList(clients) {
-      const listaDiv = document.getElementById("listaClientes");
-      if (clients.length === 0) {
-        listaDiv.innerHTML = '<p>Nenhum cliente encontrado.</p>';
-        return;
-      }
+  const listaDiv = document.getElementById("listaClientes");
 
-      let html = `
-        <table>
-          <tr>
-            <th>Nome</th>
-            <th>CNPJ</th>
-            <th>Telefone</th>
-            <th>Ações</th>
-          </tr>
-      `;
+  // Filtra só os ATIVOS
+  const ativos = clients.filter(c => (c.Status || "ATIVO").trim().toUpperCase() === "ATIVO");
 
-      clients.forEach(cliente => {
-        const nome = cliente.Nome || "Sem nome";
-        const cnpj = cliente.CNPJ || "";
-        const telefone = cliente.Telefone || "";
-        
-        html += `
-          <tr>
-            <td>${nome}</td>
-            <td>${cnpj}</td>
-            <td>${telefone}</td>
-            <td>
-              <button class="edit" onclick="abrirEdicao('${cnpj}')">Editar</button>
-              <button class="delete" onclick="excluirCliente('${cnpj}')">Excluir</button>
-            </td>
-          </tr>
-        `;
-      });
+  if (ativos.length === 0) {
+    listaDiv.innerHTML = '<p>Nenhum cliente ativo encontrado.</p>';
+    return;
+  }
 
-      html += `</table>`;
-      listaDiv.innerHTML = html;
-    }
+  let html = `
+    <table>
+      <tr>
+        <th>Nome</th>
+        <th>CNPJ</th>
+        <th>Telefone</th>
+        <th>Ações</th>
+      </tr>
+  `;
+
+  ativos.forEach(cliente => {
+    const nome = cliente.Nome || "Sem nome";
+    const cnpj = cliente.CNPJ || "";
+    const telefone = cliente.Telefone || "";
+    
+    html += `
+      <tr>
+        <td>${nome}</td>
+        <td>${cnpj}</td>
+        <td>${telefone}</td>
+        <td>
+          <button class="edit" onclick="abrirEdicao('${cnpj}')">Editar</button>
+          <button class="delete" onclick="excluirCliente('${cnpj}')">Excluir</button>
+        </td>
+      </tr>
+    `;
+  });
+
+  html += `</table>`;
+  listaDiv.innerHTML = html;
+}
 
     // Filtra clientes
     function filterClients() {
@@ -547,29 +551,34 @@
       }
     }
 
-    // Função de exclusão
-    async function excluirCliente(cnpj) {
-      if (!confirm("Tem certeza que deseja excluir este cliente?")) return;
+    // Função de exclusão (marca como inativo)
+async function excluirCliente(cnpj) {
+  if (!confirm("Tem certeza que deseja excluir este cliente?")) return;
 
-      try {
-        const res = await fetch(`${API_URL}/search?CNPJ=${encodeURIComponent(cnpj)}`, {
-          method: 'DELETE'
-        });
+  try {
+    const res = await fetch(`${API_URL}/search?CNPJ=${encodeURIComponent(cnpj)}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        "Status": "INATIVO"
+      })
+    });
 
-        if (res.ok) {
-          alert("✅ Cliente excluído com sucesso!");
-          carregarClientes();
-        } else {
-          const text = await res.text();
-          console.error("Erro ao excluir:", res.status, text);
-          alert(`❌ Erro ${res.status}: ${text}`);
-        }
-      } catch (err) {
-        console.error("Erro ao excluir cliente:", err);
-        alert("❌ Erro ao excluir. Veja o console.");
-      }
+    if (res.ok) {
+      alert("✅ Cliente marcado como excluído!");
+      carregarClientes(); // Atualiza a lista
+    } else {
+      const text = await res.text();
+      console.error("Erro ao atualizar status:", res.status, text);
+      alert(`❌ Erro ${res.status}: ${text}`);
     }
-
+  } catch (err) {
+    console.error("Erro ao excluir cliente:", err);
+    alert("❌ Erro ao excluir. Veja o console.");
+  }
+}
     // Fecha o modal
     function fecharEdicao() {
       document.getElementById("editModal").style.display = "none";
