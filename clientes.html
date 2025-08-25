@@ -552,32 +552,48 @@
     }
 
     
-  // Função de exclusão (marca como INATIVO)
-  async function excluirCliente(cnpj) {
-  if (!confirm("Tem certeza que deseja excluir este cliente?")) return;
+ // Função de exclusão via Google Apps Script
+async function excluirCliente(cnpj, nome) {
+  if (!confirm(`Tem certeza que deseja excluir o cliente "${nome}"?`)) return;
+
+  const API_URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbwGlWKVBse02DcV0QJgtztUwQVetBiCXJWUkp-xunrVm-XahiH9fDJw9rrbtVg7ri2c/exec";
+
+  const dados = {
+    action: "excluir",
+    cnpj: cnpj,
+    nome: nome
+  };
+
+  const body = Object.keys(dados)
+    .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(dados[key])}`)
+    .join("&");
 
   try {
-    const res = await fetch(`${API_URL}/search?CNPJ=${encodeURIComponent(cnpj)}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        "Status": "INATIVO"
-      })
-    });
-
-    if (res.ok) {
-      alert("✅ Cliente marcado como excluído!");
-      carregarClientes(); // Atualiza a lista
+    // Usa navigator.sendBeacon para não depender de resposta
+    if (navigator.sendBeacon) {
+      const success = navigator.sendBeacon(API_URL_APPS_SCRIPT, body);
+      if (success) {
+        alert("✅ Cliente marcado para exclusão!");
+        carregarClientes(); // Atualiza a lista
+      } else {
+        throw new Error("sendBeacon falhou");
+      }
     } else {
-      const text = await res.text();
-      console.error("Erro ao atualizar status:", res.status, text);
-      alert(`❌ Erro ${res.status}: ${text}`);
+      // Fallback com fetch no-cors
+      await fetch(API_URL_APPS_SCRIPT, {
+        method: "POST",
+        mode: "no-cors",
+        body: body,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        }
+      });
+      alert("✅ Solicitação de exclusão enviada!");
+      carregarClientes();
     }
   } catch (err) {
-    console.error("Erro ao excluir cliente:", err);
-    alert("❌ Erro ao excluir. Veja o console.");
+    console.error("Erro ao excluir:", err);
+    alert("⚠️ Falha ao enviar exclusão. Verifique no LOG.");
   }
 }
     // Fecha o modal
